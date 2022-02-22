@@ -5,10 +5,8 @@
 **Objectif :** Explorer le plus rapidement possible la plus grande partie du terrain possible. \
 **Contraintes :** Minimiser les données échangées. (Cela implique une augmentation de la complexité & de la quantité de données stockées).\
 **Exemple :** 
-<ol>
-	<il> Échanger uniquement les informations non-encore transmise à cet agent.</il>
-	<il> Échanger uniquement les donnés récoltés par l’agent.</il>
-</ol>
+1. Échanger uniquement les informations non-encore transmise à cet agent.
+2. Échanger uniquement les donnés récoltés par l’agent.
 **Critères de transition :** Pas d’apport massif de transition. Chaque agent a rencontré tous les autres / une grande majorité (~95%)\
 Une fois le critère de transition atteint, on définit un palier de remplissage ( Ratio entre : capacité du sac / capacité totale des sacs / quantité de ressource) & un type de ressource (Trésor / Diamant).\
 
