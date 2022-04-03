@@ -29,8 +29,10 @@ import jade.core.behaviours.FSMBehaviour;
 
 public class AgentOptimized extends AbstractDedaleAgent {
 	private static final long serialVersionUID = -7969468610241668140L;
-	public MapRepresentation myMap=new MapRepresentation();
+	public MapRepresentation myMap;
 	public SerializableSimpleGraph<String, MapAttribute> MapReceived=null;
+	public HashMap<String,Integer> noGo = new HashMap<String,Integer>(); 
+	public String placeWantToGo=null;
 	public AID senderPing ;
 	public AID otherAgent ;
 	public Map<AID,List> dico=new HashMap<AID,List>();
@@ -103,5 +105,14 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		
 		System.out.println("the  agent "+this.getLocalName()+ " is started");
 
+	}
+	public void updateMap(MapRepresentation map) {
+		this.myMap=map;
+	}
+	public HashMap<String,Integer> getNoGo() {
+		return noGo;
+	}
+	public void setNoGo(HashMap<String,Integer> ng) {
+		this.noGo=ng;
 	}
 }

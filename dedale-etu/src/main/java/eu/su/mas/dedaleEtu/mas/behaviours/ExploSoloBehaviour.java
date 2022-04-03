@@ -1,6 +1,8 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -46,130 +48,172 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 	 * Visited nodes
 	 */
 	private Set<String> closedNodes;
+	private AgentOptimized ag;
+	private HashMap<String,Integer> noGo;
 
 
 	public ExploSoloBehaviour(final AgentOptimized myagent, MapRepresentation myMap) {
 		super(myagent);
+		ag=myagent;
 		this.myMap=myMap;
 		this.openNodes=new ArrayList<String>();
 		this.closedNodes=new HashSet<String>();
+		this.noGo=ag.getNoGo();
 	}
 
 	@Override
 	public void action() {
 
-		if(this.myMap==null)
+		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
-		
-		//0) Retrieve the current position
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		}
+		for(int k=0;k<3;k++) {
+			//0) Retrieve the current position
+			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+			ArrayList<String> aEliminer=new ArrayList<String>();
+			for(String cle:noGo.keySet()) {
+				Integer val=noGo.get(cle);
+				if(val==0) {
+					aEliminer.add(cle);
+				}
+				else {
+					noGo.put(cle, val-1);
+				}
+				
+			}
+			for(String cle : aEliminer) {
+				noGo.remove(cle);
+			}
+			this.ag.setNoGo(noGo);
+			
+			if(this.ag.placeWantToGo!=null && this.ag.placeWantToGo!=myPosition) {
+				noGo.put(this.ag.placeWantToGo, 3);
+			}
+
+			
+			if (myPosition!=null){
+				//List of observable from the agent's current position
+				List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 	
-		if (myPosition!=null){
-			//List of observable from the agent's current position
-			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-
-			/**
-			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
-			 */
-			try {
-				this.myAgent.doWait(500);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			//1) remove the current node from openlist and add it to closedNodes.
-			this.closedNodes.add(myPosition);
-			this.openNodes.remove(myPosition);
-
-			this.myMap.addNode(myPosition,MapAttribute.closed);
-
-			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
-			String nextNode=null;
-			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-			while(iter.hasNext()){
-				String nodeId=iter.next().getLeft();
-				if (!this.closedNodes.contains(nodeId)){
-					if (!this.openNodes.contains(nodeId)){
-						this.openNodes.add(nodeId);
-						this.myMap.addNode(nodeId, MapAttribute.open);
-						this.myMap.addEdge(myPosition, nodeId);	
-					}else{
-						//the node exist, but not necessarily the edge
-						this.myMap.addEdge(myPosition, nodeId);
-					}
-					if (nextNode==null) nextNode=nodeId;
+				/**
+				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
+				 */
+				try {
+					this.myAgent.doWait(500);
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-			}
-
-			//3) while openNodes is not empty, continues.
-			if (this.openNodes.isEmpty()){
-				//Explo finished
-				finished=true;
-				System.out.println("Exploration successufully done, behaviour removed.");
-			}else{
-				//4) select next move.
-				//4.1 If there exist one open node directly reachable, go for it,
-				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
-				if (nextNode==null){
-					//no directly accessible openNode
-					//chose one, compute the path and take the first step.
-					nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
-				}
-				
-				
-				
-				/***************************************************
-				** 		ADDING the API CALL to illustrate their use **
-				*****************************************************/
-
-				//list of observations associated to the currentPosition
-				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
-				
-				//example related to the use of the backpack for the treasure hunt
-				Boolean b=false;
-				for(Couple<Observation,Integer> o:lObservations){
-					switch (o.getLeft()) {
-					case DIAMOND:case GOLD:
-
-						System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+((AbstractDedaleAgent) this.myAgent).getMyTreasureType());
-						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-						System.out.println(this.myAgent.getLocalName()+" - My expertise is: "+((AbstractDedaleAgent) this.myAgent).getMyExpertise());
-						System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.GOLD));
-						System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
-						System.out.println(this.myAgent.getLocalName()+" - The agent grabbed : "+((AbstractDedaleAgent) this.myAgent).pick());
-						System.out.println(this.myAgent.getLocalName()+" - the remaining backpack capacity is: "+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-						b=true;
-						break;
-					default:
-						break;
+	
+				//1) remove the current node from openlist and add it to closedNodes.
+				this.closedNodes.add(myPosition);
+				this.openNodes.remove(myPosition);
+	
+				this.myMap.addNode(myPosition,MapAttribute.closed);
+	
+				//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
+				String nextNode=null;
+				Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+				while(iter.hasNext()){
+					String nodeId=iter.next().getLeft();
+					if (!this.closedNodes.contains(nodeId)){
+						if (!this.openNodes.contains(nodeId)){
+							this.openNodes.add(nodeId);
+							this.myMap.addNode(nodeId, MapAttribute.open);
+							this.myMap.addEdge(myPosition, nodeId);	
+						}else{
+							//the node exist, but not necessarily the edge
+							this.myMap.addEdge(myPosition, nodeId);
+						}
+						if (nextNode==null && !noGo.containsKey(nodeId)) nextNode=nodeId;
 					}
 				}
-
-				//If the agent picked (part of) the treasure
-				if (b){
-					List<Couple<String,List<Couple<Observation,Integer>>>> lobs2=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-					System.out.println(this.myAgent.getLocalName()+" - State of the observations after picking "+lobs2);
+	
+				//3) while openNodes is not empty, continues.
+				if (this.openNodes.isEmpty()){
+					//Explo finished
+					finished=true;
+					System.out.println("Exploration successufully done, behaviour removed.");
+				}else{
+					//4) select next move.
+					//4.1 If there exist one open node directly reachable, go for it,
+					//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
+					if (nextNode==null){
+						//no directly accessible openNode
+						//chose one, compute the path and take the first step.
+						
+						Collections.shuffle(this.openNodes);
+						
+						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+						int ii=1;
+						while(ii<this.openNodes.size() && noGo.containsKey(nextNode)) {
+							nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(ii)).get(0);
+							ii+=1;
+						}
+						if(noGo.containsKey(nextNode)) {
+							
+							nextNode=this.ag.placeWantToGo;
+						}
+						
+					}
+					
+					
+					
+					
+					/***************************************************
+					** 		ADDING the API CALL to illustrate their use **
+					*****************************************************/
+	
+					//list of observations associated to the currentPosition
+					List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
+					System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
+					
+					//example related to the use of the backpack for the treasure hunt
+					Boolean b=false;
+					for(Couple<Observation,Integer> o:lObservations){
+						switch (o.getLeft()) {
+						case DIAMOND:case GOLD:
+	
+							System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+((AbstractDedaleAgent) this.myAgent).getMyTreasureType());
+							System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
+							System.out.println(this.myAgent.getLocalName()+" - My expertise is: "+((AbstractDedaleAgent) this.myAgent).getMyExpertise());
+							System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.GOLD));
+							System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
+							System.out.println(this.myAgent.getLocalName()+" - The agent grabbed : "+((AbstractDedaleAgent) this.myAgent).pick());
+							System.out.println(this.myAgent.getLocalName()+" - the remaining backpack capacity is: "+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
+							b=true;
+							break;
+						default:
+							break;
+						}
+					}
+	
+					//If the agent picked (part of) the treasure
+					if (b){
+						List<Couple<String,List<Couple<Observation,Integer>>>> lobs2=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
+						System.out.println(this.myAgent.getLocalName()+" - State of the observations after picking "+lobs2);
+						
+						//Trying to store everything in the tanker
+						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+						System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
+						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+						
+					}
 					
 					//Trying to store everything in the tanker
-					System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-					System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
-					System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-					
+					//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+					//System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
+					//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+	
+	
+					/************************************************
+					 * 				END API CALL ILUSTRATION
+					 *************************************************/
+					this.ag.placeWantToGo=nextNode;
+					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 				}
-				
-				//Trying to store everything in the tanker
-				//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-				//System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
-				//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-
-
-				/************************************************
-				 * 				END API CALL ILUSTRATION
-				 *************************************************/
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+	
 			}
-
+			((AgentOptimized) this.getAgent()).updateMap(this.myMap);
 		}
 	}
 
