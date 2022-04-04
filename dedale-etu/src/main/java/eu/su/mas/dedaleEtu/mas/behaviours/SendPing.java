@@ -27,6 +27,8 @@ public class SendPing extends OneShotBehaviour{
 
 	@Override
 	public void action() {
+		System.out.println("SendPing");
+
 		msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("PING");
 		msg.setSender(this.myAgent.getAID());

@@ -11,10 +11,9 @@ import jade.lang.acl.UnreadableException;
 
 public class CheckMapReception extends OneShotBehaviour{
 	private AgentOptimized a;
-	private float timer=0;//temps en seconde d'attente de la reception d'une map
-	private long t1,t2;
+	private long t1;
 	private int response;
-	private final float stopTimer =(float) 3;
+	private final float stopTimer =(float) 1;
 	private boolean receivedMap=false;
 	public CheckMapReception(AgentOptimized a) {
 		super(a);
@@ -28,7 +27,7 @@ public class CheckMapReception extends OneShotBehaviour{
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
 		t1=System.currentTimeMillis();
-		while(timer<stopTimer && !receivedMap) {
+		while(System.currentTimeMillis()-t1<stopTimer && !receivedMap) {
 			if (msgReceived!=null) {
 				SerializableSimpleGraph<String, MapAttribute> sgreceived=null;
 				try {
@@ -40,9 +39,6 @@ public class CheckMapReception extends OneShotBehaviour{
 					e.printStackTrace();
 				}
 			}
-			t2=System.currentTimeMillis();
-			timer=timer+(t2-t1)/1000;
-			t1=t2;
 					
 		}
 		if(!receivedMap) {

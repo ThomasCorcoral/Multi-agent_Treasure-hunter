@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendPing;
-import eu.su.mas.dedaleEtu.mas.behaviours.SendMapPing;
+import eu.su.mas.dedaleEtu.mas.behaviours.SendMap;
 import eu.su.mas.dedaleEtu.mas.behaviours.CheckMailBox;
-import eu.su.mas.dedaleEtu.mas.behaviours.SendMapMap;
 import eu.su.mas.dedaleEtu.mas.behaviours.UpdateOwnMap;
 import eu.su.mas.dedaleEtu.mas.behaviours.CheckMapReception;
 import eu.su.mas.dedaleEtu.mas.behaviours.WaitACK;
@@ -29,18 +30,25 @@ import jade.core.behaviours.FSMBehaviour;
 
 public class AgentOptimized extends AbstractDedaleAgent {
 	private static final long serialVersionUID = -7969468610241668140L;
+	private List<String> list_agentNames;
 	public MapRepresentation myMap;
 	public SerializableSimpleGraph<String, MapAttribute> MapReceived=null;
 	public HashMap<String,Integer> noGo = new HashMap<String,Integer>(); 
 	public String placeWantToGo=null;
 	public AID senderPing ;
 	public AID otherAgent ;
-	public Map<AID,List> dico=new HashMap<AID,List>();
+	//locationGold contient la liste des noeuds contenant de l'or associé au couple l'heure où il a été découvert et la quantité d'or que le noeud contient
+	public HashMap<String,Couple>locationGold=new HashMap<String,Couple>();
+	//locationGold contient la liste des noeuds contenant de diamant associé au couple l'heure où il a été découvert et la quantité d'or que le noeud contient
+	public HashMap<String,Couple>locationDiam=new HashMap<String,Couple>();
+	public int goldQte,diamQte,nbAgentGold,nbAgentDiam;
+	public Observation expertise=Observation.GOLD; //par défaut tout les agents choisissent de se pécialiser dans l'or
+	public boolean gotPing=false;
+	public Map<AID,ArrayList> dico=new HashMap<AID,ArrayList>();
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
 	private static final String CheckMailBox = "CheckMailBox";
-	private static final String SendMapPing = "SendMapPing";
-	private static final String SendMapMap = "SendMapMap";
+	private static final String SendMap = "SendMap";
 	private static final String UpdateOwnMap = "UpdateOwnMap";
 	private static final String CheckMapReception = "CheckMapReception";
 	private static final String WaitACK = "WaitACK";
@@ -50,10 +58,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	
 	protected void setup() {
 		super.setup();
-		
 		final Object[] args = getArguments();
 		
-		List<String> list_agentNames=new ArrayList<String>();
+		list_agentNames=new ArrayList<String>();
 		
 		if(args.length==0){
 			System.err.println("Error while creating the agent, names of agent to contact expected");
@@ -73,8 +80,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		// Define the different states and behaviours
 		fsm. registerFirstState (new ExploSoloBehaviour(this,myMap), Exploration);
 		fsm. registerState (new SendPing(this,list_agentNames), SendPing);
-		fsm. registerState (new SendMapPing(this,myMap), SendMapPing);
-		fsm. registerState (new SendMapMap(this,myMap), SendMapMap);
+		fsm. registerState (new SendMap(this), SendMap);
 		fsm. registerState (new CheckMailBox(this), CheckMailBox);
 		fsm. registerState (new UpdateOwnMap(this), UpdateOwnMap);
 		fsm. registerState (new CheckMapReception(this), CheckMapReception);
@@ -84,15 +90,14 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		
 		// Register the transitions
 		fsm. registerDefaultTransition (Exploration,CheckMailBox);//Default
-		fsm. registerTransition (CheckMailBox,SendPing,1);
-		fsm. registerDefaultTransition (SendPing,CheckMailBox);
-		fsm. registerTransition (CheckMailBox,SendMapPing,2);
-		fsm. registerTransition (CheckMailBox,SendMapMap,3);
-		fsm. registerDefaultTransition (SendMapMap,UpdateOwnMap);
+		fsm. registerTransition (CheckMailBox,SendPing,0);
+		fsm. registerDefaultTransition (SendPing,Exploration);
+		fsm. registerTransition (CheckMailBox,SendMap,1);
+		fsm. registerTransition (SendMap,UpdateOwnMap,2);
 		fsm. registerDefaultTransition (UpdateOwnMap,WaitACK);
 		fsm. registerTransition (WaitACK,Exploration, 1) ;
 		fsm. registerTransition (WaitACK,UpdateOtherAgentData, 2) ;
-		fsm. registerDefaultTransition(SendMapPing,CheckMapReception) ;
+		fsm. registerTransition(SendMap,CheckMapReception,1) ;
 		fsm. registerTransition (CheckMapReception,Exploration, 1) ;
 		fsm. registerTransition (CheckMapReception,UpdateOwnMap, 2) ;
 		fsm. registerDefaultTransition(UpdateOwnMap,SendACK) ;
@@ -109,10 +114,16 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public void updateMap(MapRepresentation map) {
 		this.myMap=map;
 	}
+	public MapRepresentation getMyMap() {
+		return myMap;
+	}
 	public HashMap<String,Integer> getNoGo() {
 		return noGo;
 	}
 	public void setNoGo(HashMap<String,Integer> ng) {
 		this.noGo=ng;
+	}
+	public SerializableSimpleGraph<String, MapAttribute> getMapReceived() {
+		return this.MapReceived;
 	}
 }

@@ -21,26 +21,16 @@ public class UpdateOtherAgentData extends OneShotBehaviour{
 		super(a);
 		this.a=a;
 		this.otherAgent=a.otherAgent;
-		this.mapOtherAgent=a.MapReceived;
 
 	}
 	@Override
 	public void action() {
-		List<ArrayList> noeuds= new ArrayList<ArrayList>();
-		ArrayList<String> noeudsOuverts=new ArrayList<String>();
-		ArrayList<String> noeudsFermes=new ArrayList<String>();
+		this.mapOtherAgent=a.getMapReceived();
+		ArrayList<String> noeuds= new ArrayList<String>();
 		Set<SerializableNode<String, MapAttribute>> allNodes = mapOtherAgent.getAllNodes();
 		for(SerializableNode<String, MapAttribute> node:allNodes) {
-			if(MapAttribute.open==node.getNodeContent()) {
-				noeudsOuverts.add(node.getNodeId());
-			}
-			else {
-				noeudsFermes.add(node.getNodeId());
-			}
-			
+				noeuds.add(node.getNodeId());
 		}
-		noeuds.add(noeudsOuverts);
-		noeuds.add(noeudsFermes);
 		a.dico.put(otherAgent, noeuds);
 	}
 

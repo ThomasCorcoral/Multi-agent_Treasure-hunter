@@ -14,7 +14,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AgentOptimized;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
-import jade.core.behaviours.SimpleBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 
 
 /**
@@ -29,11 +29,9 @@ import jade.core.behaviours.SimpleBehaviour;
  * @author hc
  *
  */
-public class ExploSoloBehaviour extends SimpleBehaviour {
+public class ExploSoloBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
-
-	private boolean finished = false;
 
 	/**
 	 * Current knowledge of the agent regarding the environment
@@ -63,7 +61,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 
 	@Override
 	public void action() {
-
+		System.out.println("ExploSoloBehaviour");
 		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
 		}
@@ -89,11 +87,10 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 			if(this.ag.placeWantToGo!=null && this.ag.placeWantToGo!=myPosition) {
 				noGo.put(this.ag.placeWantToGo, 3);
 			}
-
+			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 			
 			if (myPosition!=null){
 				//List of observable from the agent's current position
-				List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 	
 				/**
 				 * Just added here to let you see what the agent is doing, otherwise he will be too quick
@@ -131,7 +128,6 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				//3) while openNodes is not empty, continues.
 				if (this.openNodes.isEmpty()){
 					//Explo finished
-					finished=true;
 					System.out.println("Exploration successufully done, behaviour removed.");
 				}else{
 					//4) select next move.
@@ -155,6 +151,17 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 						}
 						
 					}
+					for(Couple<String, List<Couple<Observation, Integer>>> o1:lobs){
+						for(Couple<Observation, Integer> o2:o1.getRight()) {
+							switch(o2.getLeft()) {
+								case DIAMOND:
+									this.ag.locationDiam.put(nextNode, new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+								case GOLD:
+									this.ag.locationGold.put(nextNode, new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+							}
+							
+						}
+					}
 					
 					
 					
@@ -162,12 +169,12 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 					/***************************************************
 					** 		ADDING the API CALL to illustrate their use **
 					*****************************************************/
-	
+					/*
 					//list of observations associated to the currentPosition
 					List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
 					System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
 					
-					//example related to the use of the backpack for the treasure hunt
+					//example related to the use of the backpack for the treasure hun
 					Boolean b=false;
 					for(Couple<Observation,Integer> o:lObservations){
 						switch (o.getLeft()) {
@@ -204,7 +211,7 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 					//System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
 					//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
 	
-	
+					*/
 					/************************************************
 					 * 				END API CALL ILUSTRATION
 					 *************************************************/
@@ -213,13 +220,9 @@ public class ExploSoloBehaviour extends SimpleBehaviour {
 				}
 	
 			}
-			((AgentOptimized) this.getAgent()).updateMap(this.myMap);
+			this.ag.updateMap(this.myMap);
 		}
 	}
 
-	@Override
-	public boolean done() {
-		return finished;
-	}
 
 }

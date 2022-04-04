@@ -20,6 +20,8 @@ public class CheckMailBox extends OneShotBehaviour{
 	}
 	@Override
 	public void action() {
+		System.out.println("CheckMailBox");
+
 		MessageTemplate pingTemplate=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("PING"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
@@ -31,18 +33,20 @@ public class CheckMailBox extends OneShotBehaviour{
 		ACLMessage MapTemplate=this.myAgent.receive(shareTemplate);
 		/* we check if we received a map*/
 		if(MapTemplate != null) {
+			a.gotPing=false;
 			a.otherAgent=MapTemplate.getSender();
 			try {
 				this.a.MapReceived = (SerializableSimpleGraph<String, MapAttribute>)MapTemplate.getContentObject();
 			} catch (UnreadableException e) {
 				e.printStackTrace();
 			}
-			response=2;
+			response=1;
 		}
 		else {
 			/* otherwise we check if we received a ping*/
 
 			if(pingReceived != null) {
+				a.gotPing=true;
 				this.a.senderPing=pingReceived.getSender();
 				response=1;
 			}
