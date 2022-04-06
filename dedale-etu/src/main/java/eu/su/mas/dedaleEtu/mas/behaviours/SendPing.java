@@ -27,16 +27,12 @@ public class SendPing extends OneShotBehaviour{
 
 	@Override
 	public void action() {
-		System.out.println("SendPing");
-
 		msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("PING");
 		msg.setSender(this.myAgent.getAID());
 		for(String a : this.receivers) {
-			if(!a.equalsIgnoreCase(this.myAgent.getLocalName())) {
-				System.out.println("Agent " + this.myAgent.getLocalName() + " ping agent " + a);
-				msg.addReceiver(new AID(a, false));
-			}
+			System.out.println("Agent " + this.myAgent.getLocalName() + " ping agent " + a);
+			msg.addReceiver(new AID(a, false));
 		}
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		

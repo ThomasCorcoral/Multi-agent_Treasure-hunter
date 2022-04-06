@@ -45,15 +45,20 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public Observation expertise=Observation.GOLD; //par défaut tout les agents choisissent de se pécialiser dans l'or
 	public boolean gotPing=false;
 	public Map<AID,ArrayList> dico=new HashMap<AID,ArrayList>();
+	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
 	private static final String CheckMailBox = "CheckMailBox";
-	private static final String SendMap = "SendMap";
-	private static final String UpdateOwnMap = "UpdateOwnMap";
+	private static final String SendMapPing = "SendMapPing";
+	private static final String SendMapMap = "SendMapMap";
+	private static final String UpdateOwnMap1 = "UpdateOwnMap1";
+	private static final String UpdateOwnMap2 = "UpdateOwnMap2";
 	private static final String CheckMapReception = "CheckMapReception";
 	private static final String WaitACK = "WaitACK";
 	private static final String SendACK = "SendACK";
 	private static final String UpdateOtherAgentData = "UpdateOtherAgentData";
+	public ArrayList<String> PersoGold = new ArrayList<String>();
+	public ArrayList<String> PersoDiam = new ArrayList<String>();
 	
 	
 	protected void setup() {
@@ -80,9 +85,11 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		// Define the different states and behaviours
 		fsm. registerFirstState (new ExploSoloBehaviour(this,myMap), Exploration);
 		fsm. registerState (new SendPing(this,list_agentNames), SendPing);
-		fsm. registerState (new SendMap(this), SendMap);
+		fsm. registerState (new SendMap(this,true), SendMapPing);
+		fsm. registerState (new SendMap(this,false), SendMapMap);
 		fsm. registerState (new CheckMailBox(this), CheckMailBox);
-		fsm. registerState (new UpdateOwnMap(this), UpdateOwnMap);
+		fsm. registerState (new UpdateOwnMap(this), UpdateOwnMap1);
+		fsm. registerState (new UpdateOwnMap(this), UpdateOwnMap2);
 		fsm. registerState (new CheckMapReception(this), CheckMapReception);
 		fsm. registerState (new WaitACK(this), WaitACK);
 		fsm. registerState (new UpdateOtherAgentData(this), UpdateOtherAgentData);
@@ -92,15 +99,16 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		fsm. registerDefaultTransition (Exploration,CheckMailBox);//Default
 		fsm. registerTransition (CheckMailBox,SendPing,0);
 		fsm. registerDefaultTransition (SendPing,Exploration);
-		fsm. registerTransition (CheckMailBox,SendMap,1);
-		fsm. registerTransition (SendMap,UpdateOwnMap,2);
-		fsm. registerDefaultTransition (UpdateOwnMap,WaitACK);
+		fsm. registerTransition (CheckMailBox,SendMapPing,2);
+		fsm. registerTransition (CheckMailBox,SendMapMap,1);
+		fsm. registerDefaultTransition (SendMapMap,UpdateOwnMap2);
+		fsm. registerDefaultTransition (UpdateOwnMap2,WaitACK);
 		fsm. registerTransition (WaitACK,Exploration, 1) ;
 		fsm. registerTransition (WaitACK,UpdateOtherAgentData, 2) ;
-		fsm. registerTransition(SendMap,CheckMapReception,1) ;
+		fsm. registerDefaultTransition(SendMapPing,CheckMapReception) ;
 		fsm. registerTransition (CheckMapReception,Exploration, 1) ;
-		fsm. registerTransition (CheckMapReception,UpdateOwnMap, 2) ;
-		fsm. registerDefaultTransition(UpdateOwnMap,SendACK) ;
+		fsm. registerTransition (CheckMapReception,UpdateOwnMap1, 2) ;
+		fsm. registerDefaultTransition(UpdateOwnMap1,SendACK) ;
 		fsm. registerDefaultTransition(SendACK,UpdateOtherAgentData) ;
 		fsm. registerDefaultTransition(UpdateOtherAgentData,Exploration) ;
 

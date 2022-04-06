@@ -10,10 +10,9 @@ import jade.lang.acl.UnreadableException;
 
 public class WaitACK  extends OneShotBehaviour{
 	private AgentOptimized a;
-	private long t1,t2;
-	private float timer;
+	private long t1;
 	private final float stopTimer=(float) 3;
-	private boolean receivedACK=false;
+	private boolean receivedACK;
 	private int response;
 	public WaitACK(AgentOptimized a) {
 		super(a);
@@ -23,23 +22,20 @@ public class WaitACK  extends OneShotBehaviour{
 
 	@Override
 	public void action() {
+		response=1;
+		receivedACK=false;
 		MessageTemplate shareTemplate=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("ACK"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-		ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
 		t1=System.currentTimeMillis();
-		while(timer<stopTimer && !receivedACK) {
+		while(System.currentTimeMillis()-t1<stopTimer && !receivedACK) {
+			ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
 			if (msgReceived!=null) {
 				receivedACK=true;
 			}
-			t2=System.currentTimeMillis();
-			timer=timer+(t2-t1)/1000;
-			t1=t2;
 		}
-		if(!receivedACK) {
-			response=1;
-		}
-		else {
+		if(receivedACK) {
+			System.out.println("RECEIVED ACK "+this.a.getLocalName());
 			response=2;
 		}
 		

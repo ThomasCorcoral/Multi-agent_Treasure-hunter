@@ -13,7 +13,7 @@ public class CheckMapReception extends OneShotBehaviour{
 	private AgentOptimized a;
 	private long t1;
 	private int response;
-	private final float stopTimer =(float) 1;
+	private final float stopTimer =(float) 3;
 	private boolean receivedMap=false;
 	public CheckMapReception(AgentOptimized a) {
 		super(a);
@@ -22,15 +22,20 @@ public class CheckMapReception extends OneShotBehaviour{
 	}
 	@Override
 	public void action() {
+		response=1;
+		receivedMap=false;
+		System.out.println("CheckMap Reception");
 		MessageTemplate shareTemplate=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("SHARE-TOPO"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
-		ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
+		
 		t1=System.currentTimeMillis();
 		while(System.currentTimeMillis()-t1<stopTimer && !receivedMap) {
+			ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
 			if (msgReceived!=null) {
 				SerializableSimpleGraph<String, MapAttribute> sgreceived=null;
 				try {
+					System.out.println("MAP RECEIVED CHECK "+this.a.getLocalName());
 					a.otherAgent=msgReceived.getSender();
 					a.MapReceived = (SerializableSimpleGraph<String, MapAttribute>)msgReceived.getContentObject();
 					receivedMap=true;
@@ -41,12 +46,10 @@ public class CheckMapReception extends OneShotBehaviour{
 			}
 					
 		}
-		if(!receivedMap) {
-			response=1;
-		}
-		else {
+		if(receivedMap) {
 			response=2;
 		}
+		
 		
 	}
 	public int onEnd() {

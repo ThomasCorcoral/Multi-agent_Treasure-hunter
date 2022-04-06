@@ -2,32 +2,43 @@ package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 import dataStructures.serializableGraph.SerializableNode;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AgentOptimized;
+import eu.su.mas.dedaleEtu.mas.knowledge.AgentRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
+import eu.su.mas.dedaleEtu.mas.knowledge.SerializableAgent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 
 public class SendMap extends OneShotBehaviour{
 	private AgentOptimized a;
 	private MapRepresentation myMap;
-	public SendMap(AgentOptimized a) {
+	private boolean afterPing;
+	public SendMap(AgentOptimized a,boolean afterPing) {
 		super(a);
 		this.a=a;
+		this.afterPing=afterPing;
+		
 
 	}
 	public SerializableSimpleGraph<String, MapAttribute> updateSendMap(SerializableSimpleGraph<String, MapAttribute> ser) {
+		
 		SerializableSimpleGraph<String, MapAttribute> res=new SerializableSimpleGraph<String, MapAttribute>();
 		ArrayList<String> noeudsOther = this.a.dico.get(this.a.senderPing);
 		ArrayList<String> allNodes=new ArrayList<String>();
 		boolean nothingToSay=true;
 		
+		if(noeudsOther==null) {
+			return ser;
+		}
 		for(SerializableNode<String, MapAttribute> noeudO : ser.getAllNodes()) {
-			if(noeudsOther!=null && !noeudsOther.contains(noeudO.getNodeId())) {
+			if(!noeudsOther.contains(noeudO.getNodeId())) {
 				res.addNode(noeudO.getNodeId(), noeudO.getNodeContent());
 				allNodes.add(noeudO.getNodeId());
 				nothingToSay=false;
@@ -39,13 +50,16 @@ public class SendMap extends OneShotBehaviour{
 		}
 		
 		ArrayList<String> allEdge=new ArrayList<String>();
-		for(SerializableNode<String, MapAttribute> noeudO:res.getAllNodes()) {
-			for(String edgeO : ser.getEdges(noeudO.getNodeId())) {
+		for(String noeudO:allNodes) {
+			for(String edgeO : ser.getEdges(noeudO)) {
 				if(!allEdge.contains(edgeO)) {
 					for(SerializableNode<String, MapAttribute> noeudO2 : ser.getAllNodes()) {
-						for(String edgeO2 : ser.getEdges(noeudO.getNodeId())) {
-							if(edgeO2.equals(edgeO) && !noeudO.getNodeId().equals(noeudO2.getNodeId())) {
-								res.addEdge(edgeO, noeudO.getNodeId(), noeudO2.getNodeId());
+						for(String edgeO2 : ser.getEdges(noeudO)) {
+							if(edgeO2.equals(edgeO) && !noeudO.equals(noeudO2.getNodeId())) {
+								if(!allNodes.contains(noeudO2.getNodeId())) {
+									res.addNode(noeudO2.getNodeId(), noeudO2.getNodeContent());
+								}
+								res.addEdge(edgeO, noeudO2.getNodeId(),noeudO);
 							}
 							
 						}
@@ -58,31 +72,40 @@ public class SendMap extends OneShotBehaviour{
 		return res;
 		
 	}
+	
 	@Override
 	public void action() {
-		System.out.println("SendMap "+this.a.getLocalName());
-
+		myMap=this.a.getMyMap();
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("SHARE-TOPO");
 		msg.setSender(this.myAgent.getAID());
-		msg.addReceiver(this.a.senderPing);
-		SerializableSimpleGraph<String, MapAttribute> sg=updateSendMap(this.a.getMyMap().getSerializableGraph());
+		if(this.afterPing) {
+			msg.addReceiver(this.a.senderPing);
+		}
+		else {
+			msg.addReceiver(this.a.otherAgent);
+		}
+		//SerializableAgent sa=new SerializableAgent(new AgentRepresentation(this.a));
+		SerializableSimpleGraph<String, MapAttribute> sa = updateSendMap(myMap.getSerializableGraph());
 		try {					
-			msg.setContentObject(sg);
+			msg.setContentObject(sa);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if(sg!=null) {
+		if(sa!=null) {
+			if(this.afterPing) {
+				System.out.println("SENDMAP "+this.a.getLocalName()+" after Ping");
+			}
+			else {
+				System.out.println("SENDMAP "+this.a.getLocalName()+" after Other Map Reception");
+			}
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
+		}
+		else {
+			System.out.println("SENDMAP "+this.a.getLocalName()+" EST NULL");
 		}
 		
 		
 	}
-	public int onEnd() {
-		if(a.gotPing) {
-			return 1;		
-		}
-		return 2;
-		}
 
 }

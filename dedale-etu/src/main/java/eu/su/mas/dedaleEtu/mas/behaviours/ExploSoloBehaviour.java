@@ -41,7 +41,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 	/**
 	 * Nodes known but not yet visited
 	 */
-	private List<String> openNodes;
+	private ArrayList<String> openNodes;
 	/**
 	 * Visited nodes
 	 */
@@ -58,10 +58,16 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		this.closedNodes=new HashSet<String>();
 		this.noGo=ag.getNoGo();
 	}
+	public ArrayList<String> ordonnOpenNodes() {
+		ArrayList<String> res = new ArrayList<String>();
+		
+		return this.openNodes;
+		
+	}
 
 	@Override
 	public void action() {
-		System.out.println("ExploSoloBehaviour");
+		System.out.println("ExploSoloBehaviour "+this.ag.getLocalName());
 		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
 		}
@@ -87,9 +93,9 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 			if(this.ag.placeWantToGo!=null && this.ag.placeWantToGo!=myPosition) {
 				noGo.put(this.ag.placeWantToGo, 3);
 			}
-			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 			
 			if (myPosition!=null){
+				List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
 				//List of observable from the agent's current position
 	
 				/**
@@ -137,7 +143,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 						//no directly accessible openNode
 						//chose one, compute the path and take the first step.
 						
-						Collections.shuffle(this.openNodes);
+						this.openNodes=ordonnOpenNodes();
 						
 						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
 						int ii=1;
@@ -146,18 +152,25 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 							ii+=1;
 						}
 						if(noGo.containsKey(nextNode)) {
-							
+							System.out.println("bonjour");
 							nextNode=this.ag.placeWantToGo;
 						}
 						
 					}
 					for(Couple<String, List<Couple<Observation, Integer>>> o1:lobs){
 						for(Couple<Observation, Integer> o2:o1.getRight()) {
+							
 							switch(o2.getLeft()) {
 								case DIAMOND:
-									this.ag.locationDiam.put(nextNode, new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+									if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
+										this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+										this.ag.diamQte+=o2.getRight();
+									}
 								case GOLD:
-									this.ag.locationGold.put(nextNode, new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+									if(!this.ag.locationGold.containsKey(o1.getLeft())) {
+										this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+										this.ag.goldQte+=o2.getRight();
+									}							
 							}
 							
 						}

@@ -19,10 +19,11 @@ public class SendACK extends OneShotBehaviour{
 	}
 	@Override
 	public void action() {
+		System.out.println("SEND ACK "+this.a.getLocalName());
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("ACK");
 		msg.setSender(this.myAgent.getAID());
-		msg.addReceiver(this.a.senderPing);
+		msg.addReceiver(this.a.otherAgent);
 		
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		
