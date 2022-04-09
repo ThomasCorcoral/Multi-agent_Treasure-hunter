@@ -1,9 +1,15 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AgentOptimized;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
+import eu.su.mas.dedaleEtu.mas.knowledge.SerializableAgent;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -14,12 +20,14 @@ public class CheckMailBox extends OneShotBehaviour{
 	private int response;
 	private AgentOptimized a;
 	private boolean receivedAnything=false;
-	private final float stopTimer =(float) 1;
+	private final float stopTimer =(float) 2;
+	private SerializableAgent sAg;
 	public CheckMailBox(AgentOptimized a) {
 		super(a);
 		this.a=a;
 
 	}
+	
 	@Override
 	public void action() {
 		receivedAnything=false;
@@ -34,22 +42,36 @@ public class CheckMailBox extends OneShotBehaviour{
 				MessageTemplate.MatchProtocol("SHARE-TOPO"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 		
+		MessageTemplate ACKTemplate=MessageTemplate.and(
+				MessageTemplate.MatchProtocol("ACK"),
+				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
+		
 		long t1=System.currentTimeMillis();
 		while(System.currentTimeMillis()-t1<stopTimer && !receivedAnything) {	
 			ACLMessage pingReceived=this.myAgent.receive(pingTemplate);
 			ACLMessage MapTemplate=this.myAgent.receive(shareTemplate);
+			ACLMessage ACKReceived=this.myAgent.receive(ACKTemplate);
 			/* we check if we received a map*/
 			if(MapTemplate != null) {
 				receivedAnything=true;
 				a.otherAgent=MapTemplate.getSender();
 				try {
-					
-					this.a.MapReceived = (SerializableSimpleGraph<String, MapAttribute>)MapTemplate.getContentObject();
+					sAg=(SerializableAgent) MapTemplate.getContentObject();
+					this.a.MapReceived = sAg.getSg();
+					this.a.fusionData(sAg);
 				} catch (UnreadableException e) {
 					e.printStackTrace();
 				}
-				System.out.println("MAP RECEIVED MAILBOX "+this.a.getLocalName());
-				response=1;
+				if(this.a.WaitingForMAp.contains(a.otherAgent)) {
+					System.out.println("MAP RECEIVED CHECK2 "+this.a.getLocalName());
+					this.a.WaitingForMAp.remove(a.otherAgent);
+					response=3;
+				}
+				else {
+					System.out.println("MAP RECEIVED MAILBOX "+this.a.getLocalName());
+					response=1;
+				}
+				
 			}
 			else {
 				/* otherwise we check if we received a ping*/
@@ -60,6 +82,11 @@ public class CheckMailBox extends OneShotBehaviour{
 					this.a.senderPing=pingReceived.getSender();
 					response=2;
 				}
+			}
+			if(ACKReceived!=null && ACKReceived.getSender()==this.a.otherAgent) {
+				System.out.println("RECEIVED ACK2 "+this.a.getLocalName());
+				receivedAnything=true;
+				response=4;
 			}
 		}
 		

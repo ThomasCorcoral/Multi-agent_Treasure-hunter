@@ -58,16 +58,11 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		this.closedNodes=new HashSet<String>();
 		this.noGo=ag.getNoGo();
 	}
-	public ArrayList<String> ordonnOpenNodes() {
-		ArrayList<String> res = new ArrayList<String>();
-		
-		return this.openNodes;
-		
-	}
 
 	@Override
 	public void action() {
 		System.out.println("ExploSoloBehaviour "+this.ag.getLocalName());
+		System.out.println(this.ag.getLocalName()+" :qteDiam "+this.ag.qteDiam+" qteGold "+this.ag.qteGold+" nb persoGold "+this.ag.PersoGold.size()+" nb PersoDiam "+this.ag.PersoDiam.size());
 		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
 		}
@@ -143,17 +138,20 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 						//no directly accessible openNode
 						//chose one, compute the path and take the first step.
 						
-						this.openNodes=ordonnOpenNodes();
-						
+						//ArrayList<String> listeNodesToGo = ordonnOpenNodes(myPosition);
 						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
 						int ii=1;
 						while(ii<this.openNodes.size() && noGo.containsKey(nextNode)) {
-							nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(ii)).get(0);
+							String elem = this.openNodes.get(0);
+							this.openNodes.add(elem);
+							this.openNodes.remove(0);
+							
+							nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
 							ii+=1;
 						}
 						if(noGo.containsKey(nextNode)) {
 							System.out.println("bonjour");
-							nextNode=this.ag.placeWantToGo;
+							nextNode=myPosition;
 						}
 						
 					}
@@ -164,12 +162,12 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 								case DIAMOND:
 									if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
 										this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
-										this.ag.diamQte+=o2.getRight();
+										this.ag.qteDiam+=o2.getRight();
 									}
 								case GOLD:
 									if(!this.ag.locationGold.containsKey(o1.getLeft())) {
 										this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
-										this.ag.goldQte+=o2.getRight();
+										this.ag.qteGold+=o2.getRight();
 									}							
 							}
 							

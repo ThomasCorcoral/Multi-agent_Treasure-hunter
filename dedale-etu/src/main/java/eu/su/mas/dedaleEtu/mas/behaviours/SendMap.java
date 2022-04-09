@@ -9,7 +9,6 @@ import dataStructures.serializableGraph.SerializableNode;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AgentOptimized;
-import eu.su.mas.dedaleEtu.mas.knowledge.AgentRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.knowledge.SerializableAgent;
@@ -20,6 +19,7 @@ public class SendMap extends OneShotBehaviour{
 	private AgentOptimized a;
 	private MapRepresentation myMap;
 	private boolean afterPing;
+	SerializableAgent sAgent;
 	public SendMap(AgentOptimized a,boolean afterPing) {
 		super(a);
 		this.a=a;
@@ -87,8 +87,9 @@ public class SendMap extends OneShotBehaviour{
 		}
 		//SerializableAgent sa=new SerializableAgent(new AgentRepresentation(this.a));
 		SerializableSimpleGraph<String, MapAttribute> sa = updateSendMap(myMap.getSerializableGraph());
+		sAgent=new SerializableAgent(this.a,sa);
 		try {					
-			msg.setContentObject(sa);
+			msg.setContentObject(sAgent);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
