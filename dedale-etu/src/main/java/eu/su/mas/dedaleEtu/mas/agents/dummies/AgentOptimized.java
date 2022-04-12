@@ -31,13 +31,16 @@ import jade.core.behaviours.FSMBehaviour;
 
 public class AgentOptimized extends AbstractDedaleAgent {
 	private static final long serialVersionUID = -7969468610241668140L;
-	private List<String> list_agentNames;
+	public List<String> list_agentNames;
 	public MapRepresentation myMap;
 	public SerializableSimpleGraph<String, MapAttribute> MapReceived=null;
 	public HashMap<String,Integer> noGo = new HashMap<String,Integer>(); 
 	public String placeWantToGo=null;
 	public AID senderPing ;
 	public AID otherAgent ;
+	public int nbTotalNodes=0;
+	public int cptRegisteredNodes=0;
+	public int nbAgentCrossed=0;
 	public ArrayList<AID> WaitingForMAp=new ArrayList<AID>();
 	//locationGold contient la liste des noeuds contenant de l'or associé au couple l'heure où il a été découvert et la quantité d'or que le noeud contient
 	public HashMap<String,Couple>locationGold=new HashMap<String,Couple>();
@@ -48,14 +51,16 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public Map<AID,ArrayList> dico=new HashMap<AID,ArrayList>();
 	public HashMap<AID,Integer> PersoGold = new HashMap<AID,Integer>();
 	public HashMap<AID,Integer> PersoDiam = new HashMap<AID,Integer>();
-	private int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso;
+	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso;
 	public int qteGold=0;
 	public int qteDiam=0;
+	public int optTreasure=0;
 	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
 	private static final String CheckMailBox = "CheckMailBox";
 	private static final String SendMapPing = "SendMapPing";
+	private static final String Harvest = "Harvest";
 	private static final String SendMapMap = "SendMapMap";
 	private static final String UpdateOwnMap1 = "UpdateOwnMap1";
 	private static final String UpdateOwnMap2 = "UpdateOwnMap2";
@@ -112,6 +117,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		fsm. registerFirstState (new ExploSoloBehaviour(this,myMap), Exploration);
 		fsm. registerState (new SendPing(this,list_agentNames), SendPing);
 		fsm. registerState (new SendMap(this,true), SendMapPing);
+		fsm. registerState (new Harvest(this), Harvest);
 		fsm. registerState (new SendMap(this,false), SendMapMap);
 		fsm. registerState (new CheckMailBox(this), CheckMailBox);
 		fsm. registerState (new UpdateOwnMap(this), UpdateOwnMap1);
@@ -122,7 +128,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		fsm. registerState (new SendACK(this), SendACK);
 		
 		// Register the transitions
-		fsm. registerDefaultTransition (Exploration,CheckMailBox);//Default
+		fsm. registerTransition (Exploration,CheckMailBox,0);
+		fsm. registerTransition (Exploration,Harvest,1);
 		fsm. registerDefaultTransition (SendPing,Exploration);
 		fsm. registerTransition (CheckMailBox,SendPing,0);
 		fsm. registerTransition (CheckMailBox,SendMapPing,2);
@@ -152,8 +159,11 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		HashMap<String, Couple> locDiam1 = this.locationDiam;
 		HashMap<String, Couple> locDiam2 = sAg.getLocationDiam();
 		for(String loc : locDiam2.keySet()) {
-			if(!locDiam1.containsKey(loc)) {
+			if(!locDiam1.containsKey(loc) || (Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
 				this.locationDiam.put(loc, locDiam2.get(loc));
+				if((Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
+					
+				}
 				this.qteDiam+=(int)locDiam2.get(loc).getRight();
 			}
 		}

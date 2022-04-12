@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import dataStructures.tuple.Couple;
@@ -14,6 +15,7 @@ import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AgentOptimized;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
+import jade.core.AID;
 import jade.core.behaviours.OneShotBehaviour;
 
 
@@ -49,6 +51,8 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 	private AgentOptimized ag;
 	private HashMap<String,Integer> noGo;
 
+	private int response;
+
 
 	public ExploSoloBehaviour(final AgentOptimized myagent, MapRepresentation myMap) {
 		super(myagent);
@@ -66,6 +70,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
 		}
+		this.response=0;
 		for(int k=0;k<3;k++) {
 			//0) Retrieve the current position
 			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -125,7 +130,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 						if (nextNode==null && !noGo.containsKey(nodeId)) nextNode=nodeId;
 					}
 				}
-	
+				
 				//3) while openNodes is not empty, continues.
 				if (this.openNodes.isEmpty()){
 					//Explo finished
@@ -233,6 +238,22 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 			}
 			this.ag.updateMap(this.myMap);
 		}
+		int nbTotal=this.myMap.getSerializableGraph().getAllNodes().size();
+		if(this.ag.nbTotalNodes==nbTotal) {
+			this.ag.cptRegisteredNodes+=1;
+		}
+		else {
+			this.ag.cptRegisteredNodes=0;
+		}
+		//TODO
+		Map<AID, ArrayList> dicoExplo = this.ag.dico;
+		
+		if(this.ag.cptRegisteredNodes>15 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size()) {
+			response=1;
+		}
+	}
+	public int onEnd() {
+		return response;
 	}
 
 

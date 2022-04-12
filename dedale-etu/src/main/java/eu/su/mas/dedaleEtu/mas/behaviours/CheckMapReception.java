@@ -35,7 +35,7 @@ public class CheckMapReception extends OneShotBehaviour{
 			ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
 			if (msgReceived!=null) {
 				try {
-					System.out.println("MAP RECEIVED CHECK "+this.a.getLocalName());
+					System.out.println("DATA RECEIVED CHECK "+this.a.getLocalName());
 					a.otherAgent=msgReceived.getSender();
 					
 					SerializableAgent sAg = (SerializableAgent) msgReceived.getContentObject();

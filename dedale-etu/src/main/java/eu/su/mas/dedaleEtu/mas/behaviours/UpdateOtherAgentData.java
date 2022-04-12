@@ -32,6 +32,7 @@ public class UpdateOtherAgentData extends OneShotBehaviour{
 				noeuds.add(node.getNodeId());
 		}
 		a.dico.put(otherAgent, noeuds);
+		a.myMap.mergeMap(a.MapReceived);
 	}
 
 }
