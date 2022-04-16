@@ -13,6 +13,7 @@ import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendPing;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendMap;
+import eu.su.mas.dedaleEtu.mas.behaviours.Harvest;
 import eu.su.mas.dedaleEtu.mas.behaviours.CheckMailBox;
 import eu.su.mas.dedaleEtu.mas.behaviours.UpdateOwnMap;
 import eu.su.mas.dedaleEtu.mas.behaviours.CheckMapReception;

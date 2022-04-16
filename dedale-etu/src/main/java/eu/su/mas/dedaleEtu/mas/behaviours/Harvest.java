@@ -47,6 +47,7 @@ public class Harvest extends OneShotBehaviour{
 			optTreasure=(this.a.qteGold+this.a.qteDiam)/(this.a.freeSpaceGold+this.a.freeSpaceDiam);
 			optTreasure*=freeSpace;
 			this.a.optTreasure=optTreasure;
+			
 		}
 		
 		
