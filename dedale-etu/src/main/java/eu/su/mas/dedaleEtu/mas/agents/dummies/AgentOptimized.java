@@ -49,13 +49,15 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public HashMap<String,Couple>locationDiam=new HashMap<String,Couple>();
 	public Observation expertise=Observation.GOLD; //par défaut tout les agents choisissent de se pécialiser dans l'or
 	public boolean gotPing=false;
-	public Map<AID,ArrayList> dico=new HashMap<AID,ArrayList>();
+	public Map<String,ArrayList> dico=new HashMap<String,ArrayList>();
 	public HashMap<AID,Integer> PersoGold = new HashMap<AID,Integer>();
 	public HashMap<AID,Integer> PersoDiam = new HashMap<AID,Integer>();
 	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso;
 	public int qteGold=0;
 	public int qteDiam=0;
 	public int optTreasure=0;
+	public long tempsExplo=-1;
+	public long timeout=2*60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
 	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
@@ -161,18 +163,24 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		HashMap<String, Couple> locDiam2 = sAg.getLocationDiam();
 		for(String loc : locDiam2.keySet()) {
 			if(!locDiam1.containsKey(loc) || (Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
-				this.locationDiam.put(loc, locDiam2.get(loc));
-				if((Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
-					
+				
+				if(locDiam1.containsKey(loc) && (Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
+					this.qteDiam-=(int)this.locationDiam.get(loc).getRight();
 				}
+				this.locationDiam.put(loc, locDiam2.get(loc));
 				this.qteDiam+=(int)locDiam2.get(loc).getRight();
+
+				
 			}
 		}
 		
 		HashMap<String, Couple> locGold1 = this.locationGold;
 		HashMap<String, Couple> locGold2 = sAg.getLocationGold();
 		for(String loc : locGold2.keySet()) {
-			if(!locGold1.containsKey(loc)) {
+			if(!locGold1.containsKey(loc) || (Long)locGold1.get(loc).getLeft()<(Long)locGold2.get(loc).getLeft()) {
+				if(locGold1.containsKey(loc) && (Long)locGold1.get(loc).getLeft()<(Long)locGold2.get(loc).getLeft()) {
+					this.qteGold-=(int)this.locationGold.get(loc).getRight();
+				}
 				this.locationGold.put(loc, locGold2.get(loc));
 				this.qteGold+=(int)locGold2.get(loc).getRight();
 			}

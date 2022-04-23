@@ -65,6 +65,9 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
+		if(this.ag.tempsExplo==-1) {
+			this.ag.tempsExplo=System.currentTimeMillis();
+		}
 		System.out.println("ExploSoloBehaviour "+this.ag.getLocalName());
 		System.out.println(this.ag.getLocalName()+" :qteDiam "+this.ag.qteDiam+" qteGold "+this.ag.qteGold+" nb persoGold "+this.ag.PersoGold.size()+" nb PersoDiam "+this.ag.PersoDiam.size());
 		if(this.myMap==null) {
@@ -238,19 +241,14 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 			}
 			this.ag.updateMap(this.myMap);
 		}
-		int nbTotal=this.myMap.getSerializableGraph().getAllNodes().size();
-		if(this.ag.nbTotalNodes==nbTotal) {
-			this.ag.cptRegisteredNodes+=1;
-		}
-		else {
-			this.ag.cptRegisteredNodes=0;
-		}
-		//TODO
-		Map<AID, ArrayList> dicoExplo = this.ag.dico;
 		
-		if(this.ag.cptRegisteredNodes>15 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size()) {
-			response=1;
-		}
+		
+		Map<String, ArrayList> dicoExplo = this.ag.dico;
+		System.out.println("Nombre d'agents croisés : "+dicoExplo.size()+" pour "+this.ag.getLocalName());
+		System.out.println("Nombre de noeuds ouverts : "+this.openNodes.size()+" pour "+this.ag.getLocalName());
+        if((this.openNodes.size()<6 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>60) || System.currentTimeMillis()-this.ag.tempsExplo<this.ag.timeout ) {
+            response=1;
+        }
 	}
 	public int onEnd() {
 		return response;

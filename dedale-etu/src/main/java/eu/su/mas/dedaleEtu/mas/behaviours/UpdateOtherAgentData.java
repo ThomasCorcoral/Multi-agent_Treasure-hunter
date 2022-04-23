@@ -20,18 +20,17 @@ public class UpdateOtherAgentData extends OneShotBehaviour{
 	public UpdateOtherAgentData(AgentOptimized a) {
 		super(a);
 		this.a=a;
-		this.otherAgent=a.otherAgent;
-
 	}
 	@Override
 	public void action() {
+		this.otherAgent=a.otherAgent;
 		this.mapOtherAgent=a.getMapReceived();
 		ArrayList<String> noeuds= new ArrayList<String>();
 		Set<SerializableNode<String, MapAttribute>> allNodes = mapOtherAgent.getAllNodes();
 		for(SerializableNode<String, MapAttribute> node:allNodes) {
 				noeuds.add(node.getNodeId());
 		}
-		a.dico.put(otherAgent, noeuds);
+		a.dico.put(otherAgent.getLocalName(), noeuds);
 		a.myMap.mergeMap(a.MapReceived);
 	}
 

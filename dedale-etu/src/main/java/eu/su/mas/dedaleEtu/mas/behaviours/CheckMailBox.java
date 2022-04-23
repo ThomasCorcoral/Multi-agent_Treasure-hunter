@@ -58,6 +58,10 @@ public class CheckMailBox extends OneShotBehaviour{
 				try {
 					sAg=(SerializableAgent) MapTemplate.getContentObject();
 					this.a.MapReceived = sAg.getSg();
+					
+					if(!this.a.dico.containsKey(this.a.otherAgent.getLocalName())) {
+						this.a.dico.put(this.a.otherAgent.getLocalName(), null);
+					}
 					this.a.fusionData(sAg);
 				} catch (UnreadableException e) {
 					e.printStackTrace();
@@ -77,15 +81,22 @@ public class CheckMailBox extends OneShotBehaviour{
 				/* otherwise we check if we received a ping*/
 	
 				if(pingReceived != null) {
+					
 					System.out.println("PING RECEIVED MAILBOX "+this.a.getLocalName());
 					receivedAnything=true;
 					this.a.senderPing=pingReceived.getSender();
+					if(!this.a.dico.containsKey(this.a.senderPing.getLocalName())) {
+						this.a.dico.put(this.a.senderPing.getLocalName(), null);
+					}
 					response=2;
 				}
 			}
-			if(ACKReceived!=null && ACKReceived.getSender()==this.a.otherAgent) {
+			if(ACKReceived!=null && ACKReceived.getSender().getLocalName().equals(this.a.otherAgent.getLocalName())) {
 				System.out.println("RECEIVED ACK2 "+this.a.getLocalName());
 				receivedAnything=true;
+				if(!this.a.dico.containsKey(ACKReceived.getSender().getLocalName())) {
+					this.a.dico.put(ACKReceived.getSender().getLocalName(), null);
+				}
 				response=4;
 			}
 		}

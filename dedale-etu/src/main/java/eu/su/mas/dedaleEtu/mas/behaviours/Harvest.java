@@ -28,6 +28,7 @@ public class Harvest extends OneShotBehaviour{
 	}
 	@Override
 	public void action() {
+		System.out.println("HARVEST");
 		response=0;
 		if(this.a.optTreasure==0) {
 			optTreasure=0;
