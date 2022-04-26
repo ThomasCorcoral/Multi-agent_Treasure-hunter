@@ -70,6 +70,8 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		}
 		System.out.println("ExploSoloBehaviour "+this.ag.getLocalName());
 		System.out.println(this.ag.getLocalName()+" :qteDiam "+this.ag.qteDiam+" qteGold "+this.ag.qteGold+" nb persoGold "+this.ag.PersoGold.size()+" nb PersoDiam "+this.ag.PersoDiam.size());
+		System.out.println("qte vide backpack gold : "+this.ag.freeSpaceGold+" qte vide backpack diamond : "+this.ag.freeSpaceDiam);
+		System.out.println("expertise : "+this.ag.expertise);
 		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
 		}
@@ -138,6 +140,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 				if (this.openNodes.isEmpty()){
 					//Explo finished
 					System.out.println("Exploration successufully done, behaviour removed.");
+					response=1;
 				}else{
 					//4) select next move.
 					//4.1 If there exist one open node directly reachable, go for it,
@@ -166,18 +169,22 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 					for(Couple<String, List<Couple<Observation, Integer>>> o1:lobs){
 						for(Couple<Observation, Integer> o2:o1.getRight()) {
 							
-							switch(o2.getLeft()) {
-								case DIAMOND:
-									if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
-										this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
-										this.ag.qteDiam+=o2.getRight();
-									}
-								case GOLD:
-									if(!this.ag.locationGold.containsKey(o1.getLeft())) {
-										this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
-										this.ag.qteGold+=o2.getRight();
-									}							
+							if(o2.getLeft()== Observation.DIAMOND) {
+								if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
+									this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+									this.ag.qteDiam+=o2.getRight();
+									System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
+								}
 							}
+							if(o2.getLeft()== Observation.GOLD) {
+								if(!this.ag.locationGold.containsKey(o1.getLeft())) {
+									this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+									this.ag.qteGold+=o2.getRight();
+									System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
+
+								}
+							}
+							
 							
 						}
 					}
@@ -234,9 +241,11 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 					/************************************************
 					 * 				END API CALL ILUSTRATION
 					 *************************************************/
+					
 					this.ag.placeWantToGo=nextNode;
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 				}
+				
 	
 			}
 			this.ag.updateMap(this.myMap);
@@ -246,7 +255,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		Map<String, ArrayList> dicoExplo = this.ag.dico;
 		System.out.println("Nombre d'agents croisés : "+dicoExplo.size()+" pour "+this.ag.getLocalName());
 		System.out.println("Nombre de noeuds ouverts : "+this.openNodes.size()+" pour "+this.ag.getLocalName());
-        if((this.openNodes.size()<6 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>60) || System.currentTimeMillis()-this.ag.tempsExplo<this.ag.timeout ) {
+        if((this.openNodes.size()<6 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>60*1000) || System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 ) {
             response=1;
         }
 	}

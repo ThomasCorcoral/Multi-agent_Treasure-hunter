@@ -50,8 +50,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public Observation expertise=Observation.GOLD; //par défaut tout les agents choisissent de se pécialiser dans l'or
 	public boolean gotPing=false;
 	public Map<String,ArrayList> dico=new HashMap<String,ArrayList>();
-	public HashMap<AID,Integer> PersoGold = new HashMap<AID,Integer>();
-	public HashMap<AID,Integer> PersoDiam = new HashMap<AID,Integer>();
+	public HashMap<AID,Couple> PersoGold = new HashMap<AID,Couple>();
+	public HashMap<AID,Couple> PersoDiam = new HashMap<AID,Couple>();
 	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso;
 	public int qteGold=0;
 	public int qteDiam=0;
@@ -98,7 +98,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			this.freeSpaceGoldPerso = backpack1.getRight();
 			
 			this.freeSpaceDiam = backpack2.getRight();
-			this.freeSpaceDiamPerso = backpack1.getRight();
+			this.freeSpaceDiamPerso = backpack2.getRight();
 
 		}
 		else {
@@ -107,10 +107,10 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				this.freeSpaceGoldPerso = backpack2.getRight();
 
 				this.freeSpaceDiam = backpack1.getRight();
-				this.freeSpaceDiamPerso = backpack2.getRight();
+				this.freeSpaceDiamPerso = backpack1.getRight();
 				}
 		}
-		this.PersoGold.put(this.getAID(),freeSpaceGold);
+		this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), freeSpaceGoldPerso));
 		
 		
 		FSMBehaviour fsm = new FSMBehaviour(this);
@@ -164,8 +164,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		for(String loc : locDiam2.keySet()) {
 			if(!locDiam1.containsKey(loc) || (Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
 				
-				if(locDiam1.containsKey(loc) && (Long)locDiam1.get(loc).getLeft()<(Long)locDiam2.get(loc).getLeft()) {
-					this.qteDiam-=(int)this.locationDiam.get(loc).getRight();
+				if(locDiam1.containsKey(loc)) {
+					this.qteDiam-=(int)locDiam1.get(loc).getRight();
 				}
 				this.locationDiam.put(loc, locDiam2.get(loc));
 				this.qteDiam+=(int)locDiam2.get(loc).getRight();
@@ -178,8 +178,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		HashMap<String, Couple> locGold2 = sAg.getLocationGold();
 		for(String loc : locGold2.keySet()) {
 			if(!locGold1.containsKey(loc) || (Long)locGold1.get(loc).getLeft()<(Long)locGold2.get(loc).getLeft()) {
-				if(locGold1.containsKey(loc) && (Long)locGold1.get(loc).getLeft()<(Long)locGold2.get(loc).getLeft()) {
-					this.qteGold-=(int)this.locationGold.get(loc).getRight();
+				if(locGold1.containsKey(loc)) {
+					this.qteGold-=(int)locGold1.get(loc).getRight();
 				}
 				this.locationGold.put(loc, locGold2.get(loc));
 				this.qteGold+=(int)locGold2.get(loc).getRight();
@@ -188,20 +188,27 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		}
 		
 		
-		HashMap<AID, Integer> persoGold1 = this.PersoGold;
-		HashMap<AID, Integer> persoGold2 = sAg.getPersoGold();
+		HashMap<AID, Couple> persoGold1 = this.PersoGold;
+		HashMap<AID, Couple> persoGold2 = sAg.getPersoGold();
+		
+		HashMap<AID, Couple> persoDiam1 = this.PersoDiam;
+		HashMap<AID, Couple> persoDiam2 = sAg.getPersoDiam();
+		
 		for(AID persG : persoGold2.keySet()) {
-			if(!persoGold1.containsKey(persG)) {
+			if(!persoGold1.containsKey(persG) || (Long)persoGold1.get(persG).getLeft() <(Long)persoGold2.get(persG).getLeft()) {
 				this.PersoGold.put(persG,persoGold2.get(persG));
+			}
+			if(this.PersoDiam.containsKey(persG)) {
+				this.PersoDiam.remove(persG);
 			}
 		}
 		
-		
-		HashMap<AID, Integer> persoDiam1 = this.PersoDiam;
-		HashMap<AID, Integer> persoDiam2 = sAg.getPersoDiam();
 		for(AID persD : persoDiam2.keySet()) {
-			if(!persoDiam1.containsKey(persD)) {
+			if(!persoDiam1.containsKey(persD) || (Long)persoDiam1.get(persD).getLeft() <(Long)persoDiam2.get(persD).getLeft()) {
 				this.PersoDiam.put(persD,persoDiam2.get(persD));
+			}
+			if(this.PersoGold.containsKey(persD)) {
+				this.PersoGold.remove(persD);
 			}
 		}
 		int nbpersG=this.PersoGold.size();
@@ -210,11 +217,11 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		this.freeSpaceGold=0;
 		this.freeSpaceDiam=0;
 		
-		for(Integer persG : this.PersoGold.values()) {
-			this.freeSpaceGold+=persG;
+		for(Couple<Long,Integer> persG : this.PersoGold.values()) {
+			this.freeSpaceGold+=persG.getRight();
 		}
-		for(Integer persD : this.PersoDiam.values()) {
-			this.freeSpaceDiam+=persD;
+		for(Couple<Long,Integer> persD : this.PersoDiam.values()) {
+			this.freeSpaceDiam+=persD.getRight();
 		}
 
 		
@@ -225,19 +232,25 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		if(expertise.equals(Observation.GOLD)) {
 			goldApp2 = Math.min(qteGold,this.freeSpaceGold-this.freeSpaceGoldPerso);
 			diamApp2 = Math.min(qteDiam,this.freeSpaceDiam+this.freeSpaceDiamPerso);
-			this.freeSpaceGold-=this.freeSpaceGoldPerso;
-			this.freeSpaceDiam+=this.freeSpaceDiamPerso;
+			
 			if(goldApp2+diamApp2>goldApp1+diamApp1) {
 				expertise=Observation.DIAMOND;
+				this.PersoGold.remove(this.getAID());
+				this.PersoDiam.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceDiamPerso));
+				this.freeSpaceGold-=this.freeSpaceGoldPerso;
+				this.freeSpaceDiam+=this.freeSpaceDiamPerso;	
 			}
 		}
 		else {
 			goldApp2 = Math.min(qteGold,this.freeSpaceGold+this.freeSpaceGoldPerso);
 			diamApp2 = Math.min(qteDiam,this.freeSpaceDiam-this.freeSpaceDiamPerso);
-			this.freeSpaceGold+=this.freeSpaceGoldPerso;
-			this.freeSpaceDiam-=this.freeSpaceDiamPerso;
+			
 			if(goldApp2+diamApp2>goldApp1+diamApp1) {
 				expertise=Observation.GOLD;
+				this.PersoDiam.remove(this.getAID());
+				this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceGoldPerso));
+				this.freeSpaceGold+=this.freeSpaceGoldPerso;
+				this.freeSpaceDiam-=this.freeSpaceDiamPerso;
 			}
 		}
 		

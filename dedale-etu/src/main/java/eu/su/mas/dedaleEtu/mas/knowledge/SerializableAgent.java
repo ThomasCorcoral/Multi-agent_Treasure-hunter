@@ -33,7 +33,7 @@ public class SerializableAgent implements Serializable {
 	/*********************************
 	 * Parameters for an agent
 	 ********************************/
-	private HashMap<AID, Integer> persoGold,persoDiam;
+	private HashMap<AID, Couple> persoGold,persoDiam;
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;
 
@@ -66,10 +66,10 @@ public class SerializableAgent implements Serializable {
 		
 	}
 
-	public HashMap<AID, Integer> getPersoGold(){
+	public HashMap<AID, Couple> getPersoGold(){
 		return persoGold;
 	}
-	public HashMap<AID, Integer> getPersoDiam(){
+	public HashMap<AID, Couple> getPersoDiam(){
 		return persoDiam;
 	}
 

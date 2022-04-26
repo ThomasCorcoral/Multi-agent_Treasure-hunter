@@ -91,7 +91,7 @@ public class CheckMailBox extends OneShotBehaviour{
 					response=2;
 				}
 			}
-			if(ACKReceived!=null && ACKReceived.getSender().getLocalName().equals(this.a.otherAgent.getLocalName())) {
+			if(ACKReceived!=null && this.a.otherAgent!=null && ACKReceived.getSender().getLocalName().equals(this.a.otherAgent.getLocalName())) {
 				System.out.println("RECEIVED ACK2 "+this.a.getLocalName());
 				receivedAnything=true;
 				if(!this.a.dico.containsKey(ACKReceived.getSender().getLocalName())) {
