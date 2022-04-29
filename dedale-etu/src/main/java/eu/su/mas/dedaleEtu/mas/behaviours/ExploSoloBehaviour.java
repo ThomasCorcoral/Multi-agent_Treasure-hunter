@@ -132,15 +132,62 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 							//the node exist, but not necessarily the edge
 							this.myMap.addEdge(myPosition, nodeId);
 						}
-						if (nextNode==null && !noGo.containsKey(nodeId)) nextNode=nodeId;
+						if (!this.ag.recolte && nextNode==null && !noGo.containsKey(nodeId)) nextNode=nodeId;
+					}
+				}
+				//2 bis) observe if there are treasures
+				for(Couple<String, List<Couple<Observation, Integer>>> o1:lobs){
+					for(Couple<Observation, Integer> o2:o1.getRight()) {
+						
+						if(o2.getLeft()== Observation.DIAMOND) {
+							if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
+								this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+								this.ag.qteDiam+=o2.getRight();
+								System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
+							}
+						}
+						if(o2.getLeft()== Observation.GOLD) {
+							if(!this.ag.locationGold.containsKey(o1.getLeft())) {
+								this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
+								this.ag.qteGold+=o2.getRight();
+								System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
+
+							}
+						}
+						
+						
 					}
 				}
 				
-				//3) while openNodes is not empty, continues.
+				
+				
+				if(this.ag.recolte) {
+					//PARTIE RECOLTE ICI
+					if(this.ag.expertise.equals(Observation.DIAMOND)) {
+						for(String locD : this.ag.locationDiam.keySet()) {
+							if(locD.equals(myPosition) && !this.ag.treasureHarvested.getRight().contains(myPosition)) {
+								this.ag.openLock(Observation.DIAMOND);
+								this.ag.pick();
+								System.out.println(this.getAgent().getLocalName()+" pick a diamond treasure");
+							}
+						}
+					}
+					else if(this.ag.expertise.equals(Observation.GOLD)){
+						for(String locG : this.ag.locationGold.keySet()) {
+							if(locG.equals(myPosition) &&  !this.ag.treasureHarvested.getLeft().contains(myPosition)) {
+								this.ag.openLock(Observation.GOLD);
+								this.ag.pick();
+								System.out.println(this.getAgent().getLocalName()+" pick a gold treasure");
+							}
+						}
+					}
+					
+
+				}
 				if (this.openNodes.isEmpty()){
 					//Explo finished
 					System.out.println("Exploration successufully done, behaviour removed.");
-					response=1;
+					this.ag.recolte=true;
 				}else{
 					//4) select next move.
 					//4.1 If there exist one open node directly reachable, go for it,
@@ -161,90 +208,70 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 							ii+=1;
 						}
 						if(noGo.containsKey(nextNode)) {
-							System.out.println("bonjour");
 							nextNode=myPosition;
 						}
 						
 					}
-					for(Couple<String, List<Couple<Observation, Integer>>> o1:lobs){
-						for(Couple<Observation, Integer> o2:o1.getRight()) {
-							
-							if(o2.getLeft()== Observation.DIAMOND) {
-								if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
-									this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
-									this.ag.qteDiam+=o2.getRight();
-									System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
-								}
-							}
-							if(o2.getLeft()== Observation.GOLD) {
-								if(!this.ag.locationGold.containsKey(o1.getLeft())) {
-									this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
-									this.ag.qteGold+=o2.getRight();
-									System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
+			}
+			
+				
+				
+				
+				
+				
+				/***************************************************
+				** 		ADDING the API CALL to illustrate their use **
+				*****************************************************/
+				/*
+				//list of observations associated to the currentPosition
+				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
+				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
+				
+				//example related to the use of the backpack for the treasure hun
+				Boolean b=false;
+				for(Couple<Observation,Integer> o:lObservations){
+					switch (o.getLeft()) {
+					case DIAMOND:case GOLD:
 
-								}
-							}
-							
-							
-						}
+						System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+((AbstractDedaleAgent) this.myAgent).getMyTreasureType());
+						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
+						System.out.println(this.myAgent.getLocalName()+" - My expertise is: "+((AbstractDedaleAgent) this.myAgent).getMyExpertise());
+						System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.GOLD));
+						System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
+						System.out.println(this.myAgent.getLocalName()+" - The agent grabbed : "+((AbstractDedaleAgent) this.myAgent).pick());
+						System.out.println(this.myAgent.getLocalName()+" - the remaining backpack capacity is: "+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
+						b=true;
+						break;
+					default:
+						break;
 					}
-					
-					
-					
-					
-					/***************************************************
-					** 		ADDING the API CALL to illustrate their use **
-					*****************************************************/
-					/*
-					//list of observations associated to the currentPosition
-					List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-					System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
-					
-					//example related to the use of the backpack for the treasure hun
-					Boolean b=false;
-					for(Couple<Observation,Integer> o:lObservations){
-						switch (o.getLeft()) {
-						case DIAMOND:case GOLD:
-	
-							System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+((AbstractDedaleAgent) this.myAgent).getMyTreasureType());
-							System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-							System.out.println(this.myAgent.getLocalName()+" - My expertise is: "+((AbstractDedaleAgent) this.myAgent).getMyExpertise());
-							System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.GOLD));
-							System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
-							System.out.println(this.myAgent.getLocalName()+" - The agent grabbed : "+((AbstractDedaleAgent) this.myAgent).pick());
-							System.out.println(this.myAgent.getLocalName()+" - the remaining backpack capacity is: "+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-							b=true;
-							break;
-						default:
-							break;
-						}
-					}
-	
-					//If the agent picked (part of) the treasure
-					if (b){
-						List<Couple<String,List<Couple<Observation,Integer>>>> lobs2=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-						System.out.println(this.myAgent.getLocalName()+" - State of the observations after picking "+lobs2);
-						
-						//Trying to store everything in the tanker
-						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-						System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
-						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-						
-					}
+				}
+
+				//If the agent picked (part of) the treasure
+				if (b){
+					List<Couple<String,List<Couple<Observation,Integer>>>> lobs2=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
+					System.out.println(this.myAgent.getLocalName()+" - State of the observations after picking "+lobs2);
 					
 					//Trying to store everything in the tanker
-					//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-					//System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
-					//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-	
-					*/
-					/************************************************
-					 * 				END API CALL ILUSTRATION
-					 *************************************************/
+					System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+					System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
+					System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
 					
-					this.ag.placeWantToGo=nextNode;
-					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 				}
+				
+				//Trying to store everything in the tanker
+				//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+				//System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
+				//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+
+				*/
+				/************************************************
+				 * 				END API CALL ILUSTRATION
+				 *************************************************/
+				
+				this.ag.placeWantToGo=nextNode;
+				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+				
 				
 	
 			}
@@ -256,7 +283,8 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		System.out.println("Nombre d'agents croisés : "+dicoExplo.size()+" pour "+this.ag.getLocalName());
 		System.out.println("Nombre de noeuds ouverts : "+this.openNodes.size()+" pour "+this.ag.getLocalName());
         if((this.openNodes.size()<6 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>60*1000) || System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 ) {
-            response=1;
+            System.out.println("HARVEST "+this.ag.getLocalName());
+        	this.ag.recolte=true;
         }
 	}
 	public int onEnd() {

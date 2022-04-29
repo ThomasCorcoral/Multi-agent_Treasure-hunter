@@ -13,7 +13,6 @@ import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploSoloBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendPing;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendMap;
-import eu.su.mas.dedaleEtu.mas.behaviours.Harvest;
 import eu.su.mas.dedaleEtu.mas.behaviours.CheckMailBox;
 import eu.su.mas.dedaleEtu.mas.behaviours.UpdateOwnMap;
 import eu.su.mas.dedaleEtu.mas.behaviours.CheckMapReception;
@@ -52,18 +51,19 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public Map<String,ArrayList> dico=new HashMap<String,ArrayList>();
 	public HashMap<AID,Couple> PersoGold = new HashMap<AID,Couple>();
 	public HashMap<AID,Couple> PersoDiam = new HashMap<AID,Couple>();
-	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso;
+	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso,quantityToPick;
+	public boolean recolte=false;
 	public int qteGold=0;
 	public int qteDiam=0;
 	public int optTreasure=0;
 	public long tempsExplo=-1;
-	public long timeout=2*60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
+	public Couple<ArrayList,ArrayList> treasureHarvested=new Couple<ArrayList,ArrayList>(new ArrayList<String>(),new ArrayList<String>());// Partie droite : trésors Gold récoltés et partie gauche : trésor diamant récoltés
+	public long timeout=60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
 	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
 	private static final String CheckMailBox = "CheckMailBox";
 	private static final String SendMapPing = "SendMapPing";
-	private static final String Harvest = "Harvest";
 	private static final String SendMapMap = "SendMapMap";
 	private static final String UpdateOwnMap1 = "UpdateOwnMap1";
 	private static final String UpdateOwnMap2 = "UpdateOwnMap2";
@@ -120,7 +120,6 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		fsm. registerFirstState (new ExploSoloBehaviour(this,myMap), Exploration);
 		fsm. registerState (new SendPing(this,list_agentNames), SendPing);
 		fsm. registerState (new SendMap(this,true), SendMapPing);
-		fsm. registerState (new Harvest(this), Harvest);
 		fsm. registerState (new SendMap(this,false), SendMapMap);
 		fsm. registerState (new CheckMailBox(this), CheckMailBox);
 		fsm. registerState (new UpdateOwnMap(this), UpdateOwnMap1);
@@ -132,7 +131,6 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		
 		// Register the transitions
 		fsm. registerTransition (Exploration,CheckMailBox,0);
-		fsm. registerTransition (Exploration,Harvest,1);
 		fsm. registerDefaultTransition (SendPing,Exploration);
 		fsm. registerTransition (CheckMailBox,SendPing,0);
 		fsm. registerTransition (CheckMailBox,SendMapPing,2);
@@ -159,6 +157,18 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	}
 	
 	public void fusionData(SerializableAgent sAg) {
+		Couple<ArrayList,ArrayList> treasuresH = sAg.getTreasuresHarvested();
+		for(String locG :(ArrayList<String>)treasuresH.getLeft()) {
+			if(!treasureHarvested.getLeft().contains(locG)) {
+				treasureHarvested.getLeft().add(locG);
+			}
+		}
+		for(String locD :(ArrayList<String>)treasuresH.getRight()) {
+			if(!treasureHarvested.getRight().contains(locD)) {
+				treasureHarvested.getRight().add(locD);
+			}
+		}
+		
 		HashMap<String, Couple> locDiam1 = this.locationDiam;
 		HashMap<String, Couple> locDiam2 = sAg.getLocationDiam();
 		for(String loc : locDiam2.keySet()) {
@@ -224,35 +234,45 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			this.freeSpaceDiam+=persD.getRight();
 		}
 
-		
-		int goldApp1 = Math.min(qteGold,freeSpaceGold);
-		int diamApp1 = Math.min(qteDiam,freeSpaceDiam);
-		
-		int goldApp2,diamApp2;
-		if(expertise.equals(Observation.GOLD)) {
-			goldApp2 = Math.min(qteGold,this.freeSpaceGold-this.freeSpaceGoldPerso);
-			diamApp2 = Math.min(qteDiam,this.freeSpaceDiam+this.freeSpaceDiamPerso);
+		if(!this.recolte) {
+			int goldApp1 = Math.min(qteGold,freeSpaceGold);
+			int diamApp1 = Math.min(qteDiam,freeSpaceDiam);
 			
-			if(goldApp2+diamApp2>goldApp1+diamApp1) {
-				expertise=Observation.DIAMOND;
-				this.PersoGold.remove(this.getAID());
-				this.PersoDiam.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceDiamPerso));
-				this.freeSpaceGold-=this.freeSpaceGoldPerso;
-				this.freeSpaceDiam+=this.freeSpaceDiamPerso;	
+			int goldApp2,diamApp2;
+			if(expertise.equals(Observation.GOLD)) {
+				goldApp2 = Math.min(qteGold,this.freeSpaceGold-this.freeSpaceGoldPerso);
+				diamApp2 = Math.min(qteDiam,this.freeSpaceDiam+this.freeSpaceDiamPerso);
+				
+				if(goldApp2+diamApp2>goldApp1+diamApp1) {
+					expertise=Observation.DIAMOND;
+					this.PersoGold.remove(this.getAID());
+					this.PersoDiam.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceDiamPerso));
+					this.freeSpaceGold-=this.freeSpaceGoldPerso;
+					this.freeSpaceDiam+=this.freeSpaceDiamPerso;	
+				}
+			}
+			else {
+				goldApp2 = Math.min(qteGold,this.freeSpaceGold+this.freeSpaceGoldPerso);
+				diamApp2 = Math.min(qteDiam,this.freeSpaceDiam-this.freeSpaceDiamPerso);
+				
+				if(goldApp2+diamApp2>goldApp1+diamApp1) {
+					expertise=Observation.GOLD;
+					this.PersoDiam.remove(this.getAID());
+					this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceGoldPerso));
+					this.freeSpaceGold+=this.freeSpaceGoldPerso;
+					this.freeSpaceDiam-=this.freeSpaceDiamPerso;
+				}
+			}
+			
+			if(expertise.equals(Observation.GOLD) && freeSpaceGold!=0) {
+				this.quantityToPick=Math.min(freeSpaceGoldPerso,(freeSpaceGoldPerso/freeSpaceGold)*qteGold);
+	
+			}
+			else if(expertise.equals(Observation.DIAMOND) && freeSpaceDiam!=0){
+				this.quantityToPick=Math.min(freeSpaceDiamPerso,(freeSpaceDiamPerso/freeSpaceDiam)*qteDiam);
 			}
 		}
-		else {
-			goldApp2 = Math.min(qteGold,this.freeSpaceGold+this.freeSpaceGoldPerso);
-			diamApp2 = Math.min(qteDiam,this.freeSpaceDiam-this.freeSpaceDiamPerso);
-			
-			if(goldApp2+diamApp2>goldApp1+diamApp1) {
-				expertise=Observation.GOLD;
-				this.PersoDiam.remove(this.getAID());
-				this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceGoldPerso));
-				this.freeSpaceGold+=this.freeSpaceGoldPerso;
-				this.freeSpaceDiam-=this.freeSpaceDiamPerso;
-			}
-		}
+		
 		
 	}
 	
