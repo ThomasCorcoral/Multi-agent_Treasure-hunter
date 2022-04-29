@@ -42,6 +42,8 @@ public class SerializableAgent implements Serializable {
 	private HashMap<String, Couple> locationDiam;
 	
 	private Couple<ArrayList,ArrayList> treasureHarvested;
+	
+	private boolean recolte;
 
 	private Observation pref;
 
@@ -53,6 +55,7 @@ public class SerializableAgent implements Serializable {
 		this.persoGold=a.PersoGold;
 		this.persoDiam=a.PersoDiam;
 		this.treasureHarvested=a.treasureHarvested;
+		this.recolte=a.recolte;
 	}
 
 
@@ -77,6 +80,9 @@ public class SerializableAgent implements Serializable {
 	}
 	public Couple<ArrayList,ArrayList> getTreasuresHarvested(){
 		return treasureHarvested;
+	}
+	public boolean getRecolte() {
+		return recolte;
 	}
 
 

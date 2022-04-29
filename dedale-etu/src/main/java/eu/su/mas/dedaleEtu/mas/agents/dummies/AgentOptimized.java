@@ -234,7 +234,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			this.freeSpaceDiam+=persD.getRight();
 		}
 
-		if(!this.recolte) {
+		if(!this.recolte && !sAg.getRecolte()) {
 			int goldApp1 = Math.min(qteGold,freeSpaceGold);
 			int diamApp1 = Math.min(qteDiam,freeSpaceDiam);
 			

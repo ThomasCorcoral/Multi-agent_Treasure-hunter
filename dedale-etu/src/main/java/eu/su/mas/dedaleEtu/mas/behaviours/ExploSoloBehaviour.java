@@ -169,6 +169,16 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 								this.ag.openLock(Observation.DIAMOND);
 								this.ag.pick();
 								System.out.println(this.getAgent().getLocalName()+" pick a diamond treasure");
+								
+								int qteD = (int) this.ag.locationDiam.get(myPosition).getRight();
+								if(qteD <=this.ag.freeSpaceDiamPerso) {
+									this.ag.treasureHarvested.getRight().add(myPosition);
+									this.ag.freeSpaceDiamPerso-=qteD;
+								}
+								else {
+									this.ag.locationDiam.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteD-this.ag.freeSpaceDiamPerso));
+									this.ag.freeSpaceDiamPerso=0;
+								}
 							}
 						}
 					}
@@ -178,6 +188,16 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 								this.ag.openLock(Observation.GOLD);
 								this.ag.pick();
 								System.out.println(this.getAgent().getLocalName()+" pick a gold treasure");
+								
+								int qteG = (int) this.ag.locationGold.get(myPosition).getRight();
+								if(qteG <=this.ag.freeSpaceGoldPerso) {
+									this.ag.treasureHarvested.getLeft().add(myPosition);
+									this.ag.freeSpaceGoldPerso-=qteG;
+								}
+								else {
+									this.ag.locationGold.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteG-this.ag.freeSpaceGoldPerso));
+									this.ag.freeSpaceGoldPerso=0;
+								}
 							}
 						}
 					}
