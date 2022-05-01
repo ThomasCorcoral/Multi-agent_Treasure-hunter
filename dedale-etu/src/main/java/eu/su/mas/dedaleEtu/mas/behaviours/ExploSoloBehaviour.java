@@ -146,14 +146,16 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 							if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
 								this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
 								this.ag.qteDiam+=o2.getRight();
-								//System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
+								this.ag.UpdateExpertise();
+								System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
 							}
 						}
 						if(o2.getLeft()== Observation.GOLD) {
 							if(!this.ag.locationGold.containsKey(o1.getLeft())) {
 								this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
 								this.ag.qteGold+=o2.getRight();
-								//System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
+								this.ag.UpdateExpertise();
+								System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
 
 							}
 						}

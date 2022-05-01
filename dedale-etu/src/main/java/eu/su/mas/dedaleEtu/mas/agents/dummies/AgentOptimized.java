@@ -237,47 +237,49 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		}
 
 		if(!this.recolte) {
-			int goldApp1 = Math.min(qteGold,freeSpaceGold);
-			int diamApp1 = Math.min(qteDiam,freeSpaceDiam);
-			
-			int goldApp2,diamApp2;
-			if(expertise.equals(Observation.GOLD)) {
-				goldApp2 = Math.min(qteGold,this.freeSpaceGold-this.freeSpaceGoldPerso);
-				diamApp2 = Math.min(qteDiam,this.freeSpaceDiam+this.freeSpaceDiamPerso);
-				
-				if(goldApp2+diamApp2>goldApp1+diamApp1) {
-					expertise=Observation.DIAMOND;
-					this.PersoGold.remove(this.getAID());
-					this.PersoDiam.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceDiamPerso));
-					this.freeSpaceGold-=this.freeSpaceGoldPerso;
-					this.freeSpaceDiam+=this.freeSpaceDiamPerso;	
-				}
-			}
-			else {
-				goldApp2 = Math.min(qteGold,this.freeSpaceGold+this.freeSpaceGoldPerso);
-				diamApp2 = Math.min(qteDiam,this.freeSpaceDiam-this.freeSpaceDiamPerso);
-				
-				if(goldApp2+diamApp2>goldApp1+diamApp1) {
-					expertise=Observation.GOLD;
-					this.PersoDiam.remove(this.getAID());
-					this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceGoldPerso));
-					this.freeSpaceGold+=this.freeSpaceGoldPerso;
-					this.freeSpaceDiam-=this.freeSpaceDiamPerso;
-				}
-			}
-			
-			if(expertise.equals(Observation.GOLD) && freeSpaceGold!=0) {
-				this.quantityToPick=Math.min(freeSpaceGoldPerso,(freeSpaceGoldPerso/freeSpaceGold)*qteGold);
-	
-			}
-			else if(expertise.equals(Observation.DIAMOND) && freeSpaceDiam!=0){
-				this.quantityToPick=Math.min(freeSpaceDiamPerso,(freeSpaceDiamPerso/freeSpaceDiam)*qteDiam);
-			}
+			UpdateExpertise();
 		}
 		
 		
 	}
-	
+	public void UpdateExpertise() {
+		int goldApp1 = Math.min(qteGold,freeSpaceGold);
+		int diamApp1 = Math.min(qteDiam,freeSpaceDiam);
+		
+		int goldApp2,diamApp2;
+		if(expertise.equals(Observation.GOLD)) {
+			goldApp2 = Math.min(qteGold,this.freeSpaceGold-this.freeSpaceGoldPerso);
+			diamApp2 = Math.min(qteDiam,this.freeSpaceDiam+this.freeSpaceDiamPerso);
+			
+			if(goldApp2+diamApp2>goldApp1+diamApp1) {
+				expertise=Observation.DIAMOND;
+				this.PersoGold.remove(this.getAID());
+				this.PersoDiam.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceDiamPerso));
+				this.freeSpaceGold-=this.freeSpaceGoldPerso;
+				this.freeSpaceDiam+=this.freeSpaceDiamPerso;	
+			}
+		}
+		else {
+			goldApp2 = Math.min(qteGold,this.freeSpaceGold+this.freeSpaceGoldPerso);
+			diamApp2 = Math.min(qteDiam,this.freeSpaceDiam-this.freeSpaceDiamPerso);
+			
+			if(goldApp2+diamApp2>goldApp1+diamApp1) {
+				expertise=Observation.GOLD;
+				this.PersoDiam.remove(this.getAID());
+				this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), this.freeSpaceGoldPerso));
+				this.freeSpaceGold+=this.freeSpaceGoldPerso;
+				this.freeSpaceDiam-=this.freeSpaceDiamPerso;
+			}
+		}
+		
+		if(expertise.equals(Observation.GOLD) && freeSpaceGold!=0) {
+			this.quantityToPick=Math.min(freeSpaceGoldPerso,(freeSpaceGoldPerso/freeSpaceGold)*qteGold);
+
+		}
+		else if(expertise.equals(Observation.DIAMOND) && freeSpaceDiam!=0){
+			this.quantityToPick=Math.min(freeSpaceDiamPerso,(freeSpaceDiamPerso/freeSpaceDiam)*qteDiam);
+		}
+	}
 	public void updateMap(MapRepresentation map) {
 		this.myMap=map;
 	}
