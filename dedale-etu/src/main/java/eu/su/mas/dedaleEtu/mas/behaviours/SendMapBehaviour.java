@@ -68,7 +68,7 @@ public class SendMapBehaviour extends TickerBehaviour{
 			list_TimerAgent.put(key,list_TimerAgent.get(key)+((float) period)/1000);
 		}
 		if (msg2 != null) {
-			System.out.println(this.myAgent.getName()+"a recu un message CANCEL ou TIMEOUT");
+			//System.out.println(this.myAgent.getName()+"a recu un message CANCEL ou TIMEOUT");
 			
 			canceler=msg2.getSender();
 			list_TimerAgent.put(canceler, (float) 0);
@@ -96,7 +96,7 @@ public class SendMapBehaviour extends TickerBehaviour{
 	}
 
 	private void sendMap() {
-		System.out.println(this.myAgent.getName()+"a envoyé sa Map");
+		//System.out.println(this.myAgent.getName()+"a envoyé sa Map");
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("SHARE-TOPO");
 		msg.setSender(this.myAgent.getAID());

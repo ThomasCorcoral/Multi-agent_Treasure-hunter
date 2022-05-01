@@ -31,7 +31,7 @@ public class SendPing extends OneShotBehaviour{
 		msg.setProtocol("PING");
 		msg.setSender(this.myAgent.getAID());
 		for(String a : this.receivers) {
-			System.out.println("Agent " + this.myAgent.getLocalName() + " ping agent " + a);
+			//System.out.println("Agent " + this.myAgent.getLocalName() + " ping agent " + a);
 			msg.addReceiver(new AID(a, false));
 		}
 		((AbstractDedaleAgent)this.myAgent).sendMessage(msg);

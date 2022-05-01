@@ -95,15 +95,15 @@ public class SendMap extends OneShotBehaviour{
 		}
 		if(sa!=null) {
 			if(this.afterPing) {
-				System.out.println("SENDMAP "+this.a.getLocalName()+" after Ping");
+				//System.out.println("SENDMAP "+this.a.getLocalName()+" after Ping");
 			}
 			else {
-				System.out.println("SENDMAP "+this.a.getLocalName()+" after Other Map Reception");
+				//System.out.println("SENDMAP "+this.a.getLocalName()+" after Other Map Reception");
 			}
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		}
 		else {
-			System.out.println("SENDMAP "+this.a.getLocalName()+" EST NULL");
+			//System.out.println("SENDMAP "+this.a.getLocalName()+" EST NULL");
 		}
 		
 		

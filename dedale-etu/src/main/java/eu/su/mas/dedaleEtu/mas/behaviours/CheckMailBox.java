@@ -32,7 +32,7 @@ public class CheckMailBox extends OneShotBehaviour{
 	public void action() {
 		receivedAnything=false;
 		response=0;
-		System.out.println("CheckMailBox "+this.a.getLocalName());
+		//System.out.println("CheckMailBox "+this.a.getLocalName());
 
 		MessageTemplate pingTemplate=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("PING"),
@@ -67,12 +67,12 @@ public class CheckMailBox extends OneShotBehaviour{
 					e.printStackTrace();
 				}
 				if(this.a.WaitingForMAp.contains(a.otherAgent)) {
-					System.out.println("MAP RECEIVED CHECK2 "+this.a.getLocalName());
+					//System.out.println("MAP RECEIVED CHECK2 "+this.a.getLocalName());
 					this.a.WaitingForMAp.remove(a.otherAgent);
 					response=3;
 				}
 				else {
-					System.out.println("MAP RECEIVED MAILBOX "+this.a.getLocalName());
+					//System.out.println("MAP RECEIVED MAILBOX "+this.a.getLocalName());
 					response=1;
 				}
 				
@@ -82,7 +82,7 @@ public class CheckMailBox extends OneShotBehaviour{
 	
 				if(pingReceived != null) {
 					
-					System.out.println("PING RECEIVED MAILBOX "+this.a.getLocalName());
+					//System.out.println("PING RECEIVED MAILBOX "+this.a.getLocalName());
 					receivedAnything=true;
 					this.a.senderPing=pingReceived.getSender();
 					if(!this.a.dico.containsKey(this.a.senderPing.getLocalName())) {
@@ -92,7 +92,7 @@ public class CheckMailBox extends OneShotBehaviour{
 				}
 			}
 			if(ACKReceived!=null && this.a.otherAgent!=null && ACKReceived.getSender().getLocalName().equals(this.a.otherAgent.getLocalName())) {
-				System.out.println("RECEIVED ACK2 "+this.a.getLocalName());
+				//System.out.println("RECEIVED ACK2 "+this.a.getLocalName());
 				receivedAnything=true;
 				if(!this.a.dico.containsKey(ACKReceived.getSender().getLocalName())) {
 					this.a.dico.put(ACKReceived.getSender().getLocalName(), null);

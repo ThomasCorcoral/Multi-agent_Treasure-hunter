@@ -25,7 +25,7 @@ public class CheckMapReception extends OneShotBehaviour{
 	public void action() {
 		response=1;
 		receivedMap=false;
-		System.out.println("CheckMap Reception");
+		//System.out.println("CheckMap Reception");
 		MessageTemplate shareTemplate=MessageTemplate.and(
 				MessageTemplate.MatchProtocol("SHARE-TOPO"),
 				MessageTemplate.MatchPerformative(ACLMessage.INFORM));
@@ -35,7 +35,7 @@ public class CheckMapReception extends OneShotBehaviour{
 			ACLMessage msgReceived=this.myAgent.receive(shareTemplate);
 			if (msgReceived!=null) {
 				try {
-					System.out.println("DATA RECEIVED CHECK "+this.a.getLocalName());
+					//System.out.println("DATA RECEIVED CHECK "+this.a.getLocalName());
 					a.otherAgent=msgReceived.getSender();
 					
 					SerializableAgent sAg = (SerializableAgent) msgReceived.getContentObject();

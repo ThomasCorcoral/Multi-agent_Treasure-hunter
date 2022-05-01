@@ -35,7 +35,7 @@ public class WaitACK  extends OneShotBehaviour{
 			}
 		}
 		if(receivedACK) {
-			System.out.println("RECEIVED ACK "+this.a.getLocalName());
+			//System.out.println("RECEIVED ACK "+this.a.getLocalName());
 			response=2;
 		}
 		

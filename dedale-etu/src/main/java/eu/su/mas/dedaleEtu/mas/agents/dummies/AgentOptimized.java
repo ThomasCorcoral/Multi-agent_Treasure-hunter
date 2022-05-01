@@ -58,7 +58,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public int optTreasure=0;
 	public long tempsExplo=-1;
 	public Couple<ArrayList,ArrayList> treasureHarvested=new Couple<ArrayList,ArrayList>(new ArrayList<String>(),new ArrayList<String>());// Partie droite : trésors Gold récoltés et partie gauche : trésor diamant récoltés
-	public long timeout=2*60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
+	public long timeout=60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
+	public float difOpt = -1;
+	public String harvestObj="-1";
 	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
@@ -279,15 +281,19 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public void updateMap(MapRepresentation map) {
 		this.myMap=map;
 	}
+	
 	public MapRepresentation getMyMap() {
 		return myMap;
 	}
+	
 	public HashMap<String,Integer> getNoGo() {
 		return noGo;
 	}
+	
 	public void setNoGo(HashMap<String,Integer> ng) {
 		this.noGo=ng;
 	}
+	
 	public SerializableSimpleGraph<String, MapAttribute> getMapReceived() {
 		return this.MapReceived;
 	}
