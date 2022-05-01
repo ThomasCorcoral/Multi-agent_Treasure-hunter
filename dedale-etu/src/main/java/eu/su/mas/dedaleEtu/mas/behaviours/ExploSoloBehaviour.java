@@ -132,7 +132,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 							//the node exist, but not necessarily the edge
 							this.myMap.addEdge(myPosition, nodeId);
 						}
-						if (!this.ag.recolte && nextNode==null && !noGo.containsKey(nodeId)) nextNode=nodeId;
+						if (nextNode==null && !noGo.containsKey(nodeId)) nextNode=nodeId;
 					}
 				}
 				//2 bis) observe if there are treasures
