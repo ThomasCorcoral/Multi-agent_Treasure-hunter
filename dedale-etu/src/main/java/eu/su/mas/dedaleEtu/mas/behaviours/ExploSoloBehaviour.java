@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +33,7 @@ import jade.core.behaviours.OneShotBehaviour;
  * @author hc
  *
  */
-public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
+public class ExploSoloBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
 
@@ -66,12 +67,14 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 
 	@Override
 	public void action() {
+		
+		
 		if(this.ag.tempsExplo==-1) {
 			this.ag.tempsExplo=System.currentTimeMillis();
 		}
 		
 		//System.out.println("ExploSoloBehaviour "+this.ag.getLocalName());
-		System.out.println(this.ag.getLocalName()+" :qteDiam "+this.ag.qteDiam+" qteGold "+this.ag.qteGold+" nb persoGold "+this.ag.PersoGold.size()+" nb PersoDiam "+this.ag.PersoDiam.size());
+		//System.out.println(this.ag.getLocalName()+" :qteDiam "+this.ag.qteDiam+" qteGold "+this.ag.qteGold+" nb persoGold "+this.ag.PersoGold.size()+" nb PersoDiam "+this.ag.PersoDiam.size());
 		//System.out.println("qte vide backpack gold : "+this.ag.freeSpaceGold+" qte vide backpack diamond : "+this.ag.freeSpaceDiam);
 		//System.out.println("expertise : "+this.ag.expertise);
 		
@@ -80,6 +83,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 		}
 		this.response=0;
 		for(int k=0;k<3;k++) {
+			boolean wait = false; // Juste pour attendre un tour quand on passe à la phase Harvest
 			//0) Retrieve the current position
 			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 			ArrayList<String> aEliminer=new ArrayList<String>();
@@ -166,7 +170,11 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 				
 				if(this.ag.recolte) {
 					// Partie récolte si l'agent est arrivé sur l'objectif
+					// System.out.println("Calcul objectif de récolte !");
 					if(this.ag.harvestObj == null) {
+						
+						System.out.println("Dernier objectif de récolte atteint !");
+						
 						if(this.ag.expertise.equals(Observation.DIAMOND)) {
 							this.ag.openLock(Observation.DIAMOND);
 							this.ag.pick();
@@ -174,10 +182,12 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 							if(qteD <=this.ag.freeSpaceDiamPerso) {
 								this.ag.treasureHarvested.getRight().add(myPosition);
 								this.ag.freeSpaceDiamPerso-=qteD;
+								this.ag.locationDiam.remove(myPosition); // Trésor entierement ramassé
 							}
 							else {
 								this.ag.locationDiam.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteD-this.ag.freeSpaceDiamPerso));
 								this.ag.freeSpaceDiamPerso=0;
+								this.ag.finition = true;
 							}
 						}else {
 							this.ag.openLock(Observation.GOLD);
@@ -186,45 +196,128 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 							if(qteG <=this.ag.freeSpaceGoldPerso) {
 								this.ag.treasureHarvested.getLeft().add(myPosition);
 								this.ag.freeSpaceGoldPerso-=qteG;
+								this.ag.locationGold.remove(myPosition); // Trésor entierement ramassé
 							}
 							else {
 								this.ag.locationGold.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteG-this.ag.freeSpaceGoldPerso));
 								this.ag.freeSpaceGoldPerso=0;
+								this.ag.finition = true;
 							}
 						}
+						if(this.ag.expertise.equals(Observation.DIAMOND)) {
+							if(this.ag.freeSpaceDiamPerso < this.ag.objectif) {
+								this.ag.finition = true;
+							}
+						}else {
+							if(this.ag.freeSpaceGoldPerso < this.ag.objectif) {
+								this.ag.finition = true;
+							}
+						}
+						
 						this.ag.harvestObj = "-1";
 					}
+
+					// System.out.println(this.ag.harvestObj);
 					// Partie définition du prochain objectif
-					if((this.ag.harvestObj == "-1")) {
+					if(this.ag.harvestObj.startsWith("-")) {
+						
+						// System.out.println("Définition d'un nouvel objectif de récolte !");
+						
+						// Première partie : Diamant
+						
 						if(this.ag.expertise.equals(Observation.DIAMOND)) {
+							
+							// System.out.println("Recherche diamant !");
+							
 							if(this.ag.PersoDiam.size() == 1) { // L'agent est le seul à récolter des diamants
+								
+								// System.out.println("Seul à récolter des diamants !");
+								
 								int minDistDiams = -1;
 								for(String locD : this.ag.locationDiam.keySet()) {
 									int currMin = (int) this.ag.locationDiam.get(locD).getRight();
 									if(minDistDiams == -1 || currMin < minDistDiams) {
 										minDistDiams = currMin;
-										this.ag.harvestObj = (String) this.ag.locationDiam.get(locD).getLeft();
+										this.ag.harvestObj = locD;
 									}
 								}
 							}else { // Il y a plusieurs agents qui veulent la même ressource
+								
+								// System.out.println("Récolte des diamants à plusieurs !");
+								
 								float dMoy = 0;
 								for(String locD : this.ag.locationDiam.keySet()) {
 									dMoy += this.myMap.getShortestPath(myPosition, locD).size();
 								}
 								dMoy /= this.ag.locationDiam.size();
+								
+								int currentAgentId = -1;
+								int size = Math.max(this.ag.locationDiam.size(), this.ag.PersoDiam.size());
+								int[][] matrix = new int[size][size];
+								for(int i = 0; i<size;i++){
+							        Arrays.fill(matrix[i], 0);
+						        }
+								int i = 0;
+								int j = 0;
+								for(String locD : this.ag.locationDiam.keySet()) {
+									j=0;
+									int valTreasure = (int) this.ag.locationDiam.get(locD).getRight();
+									for(AID persD : this.ag.PersoDiam.keySet()) {
+										int dist = this.myMap.getShortestPath(myPosition, locD).size();
+										if(persD == this.ag.getAID()) {
+											currentAgentId = j;
+											int difOpt = 0;
+											if(valTreasure > this.ag.freeSpaceDiamPerso) {
+												difOpt = Math.abs(this.ag.optTreasure - this.ag.freeSpaceDiamPerso);
+											}else {
+												difOpt = Math.abs(this.ag.optTreasure - valTreasure);
+											}
+											matrix[i][j] = (int) dist + difOpt;
+										}else {
+											int difOpt = 0;
+											if(valTreasure > (int) this.ag.PersoDiam.get(persD).getRight()) {
+												difOpt = Math.abs(this.ag.optTreasure - (int) this.ag.PersoDiam.get(persD).getRight());
+											}else {
+												difOpt = Math.abs(this.ag.optTreasure - valTreasure);
+											}
+											if(dist > dMoy) {
+												matrix[i][j] = (int) (1.5 * dist + difOpt);
+											}else {
+												matrix[i][j] = (int) (0.75 * dist + difOpt);
+											}
+										}
+										j+=1;
+									}
+									i+=1;
+								}
+								HungarianAlgo ha = new HungarianAlgo(matrix);
+								int[][] assignment = ha.findOptimalAssignment();
+								
+								int col = 0;
+								for(int ii=0; i < assignment.length; ii++) {
+									if(assignment[ii][1] == currentAgentId) {
+										col = ii;
+									}
+								}
+								this.ag.harvestObj = (String) this.ag.locationDiam.keySet().toArray()[col];
 							}
-						}else if(this.ag.expertise.equals(Observation.GOLD)){
+							
+						// Deuxième partie : Gold
+							
+						}else if(this.ag.expertise.equals(Observation.GOLD)){ // Partie Gold
+							// System.out.println("Récolte des golds seul !");
 							if(this.ag.expertise.equals(Observation.GOLD)) {
 								if(this.ag.PersoGold.size() == 1) { // L'agent est le seul à récolter du gold
 									int minDistGold = -1;
-									for(String locD : this.ag.locationGold.keySet()) {
-										int currMin = (int) this.ag.locationGold.get(locD).getRight();
+									for(String locG : this.ag.locationGold.keySet()) {
+										int currMin = (int) this.ag.locationGold.get(locG).getRight();
 										if(minDistGold == -1 || currMin < minDistGold) {
 											minDistGold = currMin;
-											this.ag.harvestObj = (String) this.ag.locationGold.get(locD).getLeft();
+											this.ag.harvestObj = locG;
 										}
 									}
 								}else { // Il y a plusieurs agents qui veulent la même ressource
+									// System.out.println("Récolte des golds à plusieurs !");
 									float dMoy = 0;
 									for(String locG : this.ag.locationGold.keySet()) {
 										dMoy += this.myMap.getShortestPath(myPosition, locG).size();
@@ -232,13 +325,12 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 									dMoy /= this.ag.locationGold.size();
 									
 									int currentAgentId = -1;
-									int[][] matrix = new int[this.ag.locationGold.size()][this.ag.locationDiam.size()];
+									int[][] matrix = new int[this.ag.locationGold.size()][this.ag.PersoGold.size()];
 									int i = 0;
 									int j = 0;
-									
 									for(String locG : this.ag.locationGold.keySet()) {
 										j=0;
-										int valTreasure = (int) this.ag.locationDiam.get(locG).getRight();
+										int valTreasure = (int) this.ag.locationGold.get(locG).getRight();
 										for(AID persG : this.ag.PersoGold.keySet()) {
 											int dist = this.myMap.getShortestPath(myPosition, locG).size();
 											if(persG == this.ag.getAID()) {
@@ -257,7 +349,6 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 												}else {
 													difOpt = Math.abs(this.ag.optTreasure - valTreasure);
 												}
-												
 												if(dist > dMoy) {
 													matrix[i][j] = (int) (1.5 * dist + difOpt);
 												}else {
@@ -268,22 +359,16 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 										}
 										i+=1;
 									}
-									
 									HungarianAlgo ha = new HungarianAlgo(matrix);
 									int[][] assignment = ha.findOptimalAssignment();
-
-									if (assignment.length > 0) {
-								        // print assignment
-								        for (int ii = 0; ii < assignment.length; ii++) {
-								        	System.out.print("Col" + assignment[ii][0] + " => Row" + assignment[ii][1] + " (" + matrix[assignment[ii][0]][assignment[ii][1]] + ")");
-								        	System.out.println();
-								        }
-									} else {
-											System.out.println("no assignment found!");
+									
+									int col = 0;
+									for(int ii=0; i < assignment.length; ii++) {
+										if(assignment[ii][1] == currentAgentId) {
+											col = ii;
+										}
 									}
-								    
-									
-									
+									this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[col];
 								}	
 							}
 						}
@@ -291,12 +376,23 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 				}
 				
 				if(this.ag.recolte) {
-					nextNode=this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
+
+					// System.out.println("Calcul chemin pour récolter le plus proche !");
+					System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
+					if(!this.ag.harvestObj.equals(myPosition)) {
+						nextNode=this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
+					}
 				}
 				else if(this.openNodes.isEmpty()){
 					//Explo finished
 					//System.out.println("Exploration successufully done, behaviour removed.");
 					this.ag.recolte=true;
+					if(this.ag.expertise.equals(Observation.DIAMOND)) {
+						this.ag.objectif = (float) (this.ag.freeSpaceDiamPerso - this.ag.optTreasure*0.95*this.ag.freeSpaceDiamPerso);
+					}else {
+						this.ag.objectif = (float) (this.ag.freeSpaceGoldPerso - this.ag.optTreasure*0.95*this.ag.freeSpaceGoldPerso);
+					}
+					wait = true;
 				}else{
 					//4) select next move.
 					//4.1 If there exist one open node directly reachable, go for it,
@@ -372,14 +468,15 @@ public class ExploSoloBehaviour extends OneShotBehaviour {HungarianAlgo
 				/************************************************
 				 * 				END API CALL ILUSTRATION
 				 *************************************************/
-				
-				if(this.ag.recolte) {	// Pour la phase de récolte on mets la variable a null pour montrer qu'on a atteint l'objectif
-					if(this.ag.harvestObj == nextNode) {
-						this.ag.harvestObj = null;
+				if(!wait && !this.ag.finition) {
+					if(this.ag.recolte) {	// Pour la phase de récolte on mets la variable a null pour montrer qu'on a atteint l'objectif
+						if(this.ag.harvestObj == nextNode) {
+							this.ag.harvestObj = null;
+						}
 					}
+					this.ag.placeWantToGo=nextNode;
+					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 				}
-				this.ag.placeWantToGo=nextNode;
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
 			this.ag.updateMap(this.myMap);
 		}

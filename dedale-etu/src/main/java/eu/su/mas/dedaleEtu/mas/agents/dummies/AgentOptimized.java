@@ -61,6 +61,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public long timeout=60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
 	public float difOpt = -1;
 	public String harvestObj="-1";
+	public boolean finition = false;
+	public float objectif = -1;
 	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
