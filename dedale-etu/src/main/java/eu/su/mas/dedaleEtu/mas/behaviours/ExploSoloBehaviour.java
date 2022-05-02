@@ -150,16 +150,14 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 							if(!this.ag.locationDiam.containsKey(o1.getLeft())) {
 								this.ag.locationDiam.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
 								this.ag.qteDiam+=o2.getRight();
-								this.ag.UpdateExpertise();
-								System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
+								//System.out.println("AJOUT DIAMOND DEPUIS EXPLO "+this.ag.qteDiam);
 							}
 						}
 						if(o2.getLeft()== Observation.GOLD) {
 							if(!this.ag.locationGold.containsKey(o1.getLeft())) {
 								this.ag.locationGold.put(o1.getLeft(), new Couple<Long,Integer>(System.currentTimeMillis(),o2.getRight()));
 								this.ag.qteGold+=o2.getRight();
-								this.ag.UpdateExpertise();
-								System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
+								//System.out.println("AJOUT GOLD DEPUIS EXPLO "+this.ag.qteGold);
 
 							}
 						}
@@ -327,7 +325,11 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 									dMoy /= this.ag.locationGold.size();
 									
 									int currentAgentId = -1;
-									int[][] matrix = new int[this.ag.locationGold.size()][this.ag.PersoGold.size()];
+									int size = Math.max(this.ag.locationGold.size(), this.ag.PersoGold.size());
+									int[][] matrix = new int[size][size];
+									for(int i = 0; i<size;i++){
+								        Arrays.fill(matrix[i], 0);
+							        }
 									int i = 0;
 									int j = 0;
 									for(String locG : this.ag.locationGold.keySet()) {
@@ -368,6 +370,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 									for(int ii=0; i < assignment.length; ii++) {
 										if(assignment[ii][1] == currentAgentId) {
 											col = ii;
+											break;
 										}
 									}
 									this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[col];
