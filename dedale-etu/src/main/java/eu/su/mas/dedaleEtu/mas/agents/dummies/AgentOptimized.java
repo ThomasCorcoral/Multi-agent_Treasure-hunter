@@ -101,7 +101,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			this.freeSpaceGold = backpack1.getRight();
 			this.freeSpaceGoldPerso = backpack1.getRight();
 			
-			this.freeSpaceDiam = backpack2.getRight();
+			this.freeSpaceDiam = 0;
 			this.freeSpaceDiamPerso = backpack2.getRight();
 
 		}
@@ -110,7 +110,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				this.freeSpaceGold = backpack2.getRight();
 				this.freeSpaceGoldPerso = backpack2.getRight();
 
-				this.freeSpaceDiam = backpack1.getRight();
+				this.freeSpaceDiam = 0;
 				this.freeSpaceDiamPerso = backpack1.getRight();
 				}
 		}
