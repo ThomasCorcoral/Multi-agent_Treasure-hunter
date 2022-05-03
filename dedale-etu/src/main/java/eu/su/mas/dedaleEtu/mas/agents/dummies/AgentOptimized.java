@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.agents.dummies;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,8 +20,7 @@ import eu.su.mas.dedaleEtu.mas.behaviours.CheckMapReception;
 import eu.su.mas.dedaleEtu.mas.behaviours.WaitACK;
 import eu.su.mas.dedaleEtu.mas.behaviours.UpdateOtherAgentData;
 import eu.su.mas.dedaleEtu.mas.behaviours.SendACK;
-
-
+import eu.su.mas.dedaleEtu.mas.knowledge.HungarianAlgo;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.SerializableAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
@@ -51,7 +51,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public Map<String,ArrayList> dico=new HashMap<String,ArrayList>();
 	public HashMap<AID,Couple> PersoGold = new HashMap<AID,Couple>();
 	public HashMap<AID,Couple> PersoDiam = new HashMap<AID,Couple>();
-	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso,quantityToPick;
+	public int freeSpaceGold,freeSpaceDiam,freeSpaceGoldPerso,freeSpaceDiamPerso,quantityToPick, backpackGold, backpackDiam;
 	public boolean recolte=false;
 	public int qteGold=0;
 	public int qteDiam=0;
@@ -63,6 +63,10 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public String harvestObj="-1";
 	public boolean finition = false;
 	public float objectif = -1;
+	public String secondObj = "-1";
+	public String[] objHarvest = null;
+	
+	public int scoreObj = 100000;
 	
 	private static final String Exploration = "Exploration";
 	private static final String SendPing = "SendPing";
@@ -100,9 +104,11 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		if(backpack1.getLeft().equals(Observation.GOLD)) {
 			this.freeSpaceGold = backpack1.getRight();
 			this.freeSpaceGoldPerso = backpack1.getRight();
+			this.backpackGold = this.freeSpaceGoldPerso;
 			
-			this.freeSpaceDiam = 0;
+			this.freeSpaceDiam = backpack2.getRight();
 			this.freeSpaceDiamPerso = backpack2.getRight();
+			this.backpackDiam = this.freeSpaceDiamPerso;
 
 		}
 		else {
@@ -110,10 +116,14 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				this.freeSpaceGold = backpack2.getRight();
 				this.freeSpaceGoldPerso = backpack2.getRight();
 
-				this.freeSpaceDiam = 0;
+				this.freeSpaceDiam = backpack1.getRight();
 				this.freeSpaceDiamPerso = backpack1.getRight();
 				}
 		}
+		
+		this.backpackDiam = this.freeSpaceDiamPerso;
+		this.backpackGold = this.freeSpaceGoldPerso;
+		
 		this.PersoGold.put(this.getAID(),new Couple<Long,Integer>(System.currentTimeMillis(), freeSpaceGoldPerso));
 		
 		
@@ -242,8 +252,169 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			UpdateExpertise();
 		}
 		
-		
+		if(this.recolte) {
+			String myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
+			// Objectif de récolte égaux
+			
+			if(sAg.harvestObj == this.harvestObj) {
+				if(this.scoreObj < sAg.scoreObj) {
+					GetNewHarvet(this.harvestObj, myPosition);
+				}
+			}
+			
+			
+			
+			
+			// L'autre agent veut accéder à la case sur laquelle est notre agent
+			if(sAg.placeWantToGo == myPosition ) {
+				
+			}
+			
+			// TODO : Mettre à jour les trésors ramassées par l'autre agent
+			if(this.expertise.equals(Observation.DIAMOND)) {
+				HashMap<String,Couple>cpy = locationDiam;
+				for(String locD : cpy.keySet()) {
+					if(!sAg.getLocationDiam().containsKey(locD)) {
+						cpy.remove(locD);
+					}
+				}
+				this.locationDiam = cpy;
+			}else {
+				HashMap<String,Couple>cpy = locationGold;
+				for(String locG : cpy.keySet()) {
+					if(!sAg.getLocationGold().containsKey(locG)) {
+						cpy.remove(locG);
+					}
+				}
+				this.locationGold = cpy;
+			}
+		}
 	}
+	
+	
+	public void GetNewHarvet(String toPenalyze, String myPosition) {
+		if(this.expertise.equals(Observation.DIAMOND)) {
+			float dMoy = 0;
+			for(String locD : this.locationDiam.keySet()) {
+				dMoy += this.myMap.getShortestPath(myPosition, locD).size();
+			}
+			dMoy /= this.locationDiam.size();
+			int currentAgentId = -1;
+			int size = Math.max(this.locationDiam.size(), this.PersoDiam.size());
+			int[][] matrix = new int[size][size];
+			for(int i = 0; i<size;i++){
+		        Arrays.fill(matrix[i], 0);
+	        }
+			int i = 0;
+			int j = 0;
+			for(String locD : this.locationDiam.keySet()) {
+				j=0;
+				int valTreasure = (int) this.locationDiam.get(locD).getRight();
+				for(AID persD : this.PersoDiam.keySet()) {
+					int dist = this.myMap.getShortestPath(myPosition, locD).size();
+					if(persD == this.getAID()) {
+						currentAgentId = j;
+						int difOpt = 0;
+						float missOpt = (this.optTreasure*this.backpackDiam) - (this.backpackDiam - this.freeSpaceDiamPerso);
+						difOpt = (int) Math.abs(missOpt - valTreasure);
+						
+						if(this.treasureHarvested.getLeft().contains(locD)) {
+							difOpt += 100000;
+						}
+						if(locD == toPenalyze) {
+							difOpt += 10000;
+						}
+						matrix[i][j] = (int) dist + difOpt;
+					}else {
+						int difOpt = 0;
+						if(valTreasure > (int) this.PersoDiam.get(persD).getRight()) {
+							difOpt = Math.abs(this.optTreasure - (int) this.PersoDiam.get(persD).getRight());
+						}else {
+							difOpt = Math.abs(this.optTreasure - valTreasure);
+						}
+						if(dist > dMoy) {
+							matrix[i][j] = (int) (1.5 * dist + difOpt);
+						}else {
+							matrix[i][j] = (int) (0.75 * dist + difOpt);
+						}
+					}
+					j+=1;
+				}
+				i+=1;
+			}
+			HungarianAlgo ha = new HungarianAlgo(matrix);
+			int[][] assignment = ha.findOptimalAssignment();
+			
+			int col = 0;
+			for(int ii=0; ii < assignment.length; ii++) {
+				if(assignment[ii][1] == currentAgentId) {
+					col = ii;
+					break;
+				}
+			}
+			this.scoreObj = matrix[col][currentAgentId];
+			this.harvestObj = (String) this.locationDiam.keySet().toArray()[col];
+		}else if(this.expertise.equals(Observation.GOLD)){
+			float dMoy = 0;
+			for(String locG : this.locationGold.keySet()) {
+				dMoy += this.myMap.getShortestPath(myPosition, locG).size();
+			}
+			dMoy /= this.locationGold.size();
+			
+			int currentAgentId = -1;
+			int size = Math.max(this.locationGold.size(), this.PersoGold.size());
+			int[][] matrix = new int[size][size];
+			for(int i = 0; i<size;i++){
+		        Arrays.fill(matrix[i], 0);
+	        }
+			int i = 0;
+			int j = 0;
+			for(String locG : this.locationGold.keySet()) {
+				j=0;
+				int valTreasure = (int) this.locationGold.get(locG).getRight();
+				for(AID persG : this.PersoGold.keySet()) {
+					int dist = this.myMap.getShortestPath(myPosition, locG).size();
+					if(persG == this.getAID()) {
+						currentAgentId = j;
+						int difOpt = 0;
+						float missOpt = (this.optTreasure*this.backpackGold) - (this.backpackGold - this.freeSpaceGoldPerso);
+						difOpt = (int) Math.abs(missOpt - valTreasure);
+						if(this.treasureHarvested.getRight().contains(locG)) {
+							difOpt += 10000;
+						}
+						if(locG == toPenalyze) {
+							difOpt += 10000;
+						}
+						matrix[i][j] = (int) dist + difOpt;
+					}else {
+						int difOpt = 0;
+						difOpt = Math.abs(this.optTreasure*(int) this.PersoGold.get(persG).getRight() - valTreasure);
+						if(dist > dMoy) {
+							matrix[i][j] = (int) (1.5 * dist + difOpt);
+						}else {
+							matrix[i][j] = (int) (0.75 * dist + difOpt);
+						}
+					}
+					j+=1;
+				}
+				i+=1;
+			}
+			HungarianAlgo ha = new HungarianAlgo(matrix);
+			int[][] assignment = ha.findOptimalAssignment();
+			
+			int col = 0;
+			for(int ii=0; ii < assignment.length; ii++) {
+				if(assignment[ii][1] == currentAgentId) {
+					col = ii;
+					break;
+				}
+			}
+			this.scoreObj = matrix[col][currentAgentId];
+			this.harvestObj = (String) this.locationGold.keySet().toArray()[col];
+		}	
+	}
+	
+	
 	public void UpdateExpertise() {
 		int goldApp1 = Math.min(qteGold,freeSpaceGold);
 		int diamApp1 = Math.min(qteDiam,freeSpaceDiam);
@@ -274,6 +445,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			}
 		}
 		
+		
 		if(expertise.equals(Observation.GOLD) && freeSpaceGold!=0) {
 			this.quantityToPick=Math.min(freeSpaceGoldPerso,(freeSpaceGoldPerso/freeSpaceGold)*qteGold);
 
@@ -282,6 +454,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			this.quantityToPick=Math.min(freeSpaceDiamPerso,(freeSpaceDiamPerso/freeSpaceDiam)*qteDiam);
 		}
 	}
+	
 	public void updateMap(MapRepresentation map) {
 		this.myMap=map;
 	}
@@ -301,4 +474,5 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public SerializableSimpleGraph<String, MapAttribute> getMapReceived() {
 		return this.MapReceived;
 	}
+	
 }

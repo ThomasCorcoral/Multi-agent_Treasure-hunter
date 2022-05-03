@@ -169,6 +169,14 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 				
 				
 				if(this.ag.recolte) {
+					if(this.ag.objHarvest == null) {
+						if(this.ag.expertise.equals(Observation.DIAMOND)) {
+							this.ag.objHarvest = new String[this.ag.locationDiam.size()];
+						}else{
+							this.ag.objHarvest = new String[this.ag.locationGold.size()];
+						}
+					}
+					
 					// Partie récolte si l'agent est arrivé sur l'objectif
 					// System.out.println("Calcul objectif de récolte !");
 					if(this.ag.harvestObj == null) {
@@ -176,33 +184,45 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 						System.out.println("Dernier objectif de récolte atteint !");
 						
 						if(this.ag.expertise.equals(Observation.DIAMOND)) {
-							this.ag.openLock(Observation.DIAMOND);
-							this.ag.pick();
-							int qteD = (int) this.ag.locationDiam.get(myPosition).getRight();
-							if(qteD <=this.ag.freeSpaceDiamPerso) {
-								this.ag.treasureHarvested.getRight().add(myPosition);
-								this.ag.freeSpaceDiamPerso-=qteD;
-								this.ag.locationDiam.remove(myPosition); // Trésor entierement ramassé
-							}
-							else {
-								this.ag.locationDiam.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteD-this.ag.freeSpaceDiamPerso));
-								this.ag.freeSpaceDiamPerso=0;
-								this.ag.finition = true;
-							}
+							try {
+								this.ag.openLock(Observation.DIAMOND);
+								this.ag.pick();
+								int qteD = (int) this.ag.locationDiam.get(myPosition).getRight();
+								if(qteD <=this.ag.freeSpaceDiamPerso) {
+									this.ag.treasureHarvested.getRight().add(myPosition);
+									this.ag.freeSpaceDiamPerso-=qteD;
+									this.ag.locationDiam.remove(myPosition); // Trésor entierement ramassé
+								}
+								else {
+									this.ag.locationDiam.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteD-this.ag.freeSpaceDiamPerso));
+									this.ag.freeSpaceDiamPerso=0;
+									this.ag.finition = true;
+								}
+						    } catch (Exception e) {
+							      System.out.println("Pas de diamants ici.");
+							      System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
+							      this.ag.locationDiam.remove(myPosition); // Trésor entierement ramassé
+						    }
 						}else {
-							this.ag.openLock(Observation.GOLD);
-							this.ag.pick();
-							int qteG = (int) this.ag.locationGold.get(myPosition).getRight();
-							if(qteG <=this.ag.freeSpaceGoldPerso) {
-								this.ag.treasureHarvested.getLeft().add(myPosition);
-								this.ag.freeSpaceGoldPerso-=qteG;
-								this.ag.locationGold.remove(myPosition); // Trésor entierement ramassé
-							}
-							else {
-								this.ag.locationGold.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteG-this.ag.freeSpaceGoldPerso));
-								this.ag.freeSpaceGoldPerso=0;
-								this.ag.finition = true;
-							}
+							try {
+								this.ag.openLock(Observation.GOLD);
+								this.ag.pick();
+								int qteG = (int) this.ag.locationGold.get(myPosition).getRight();
+								if(qteG <=this.ag.freeSpaceGoldPerso) {
+									this.ag.treasureHarvested.getLeft().add(myPosition);
+									this.ag.freeSpaceGoldPerso-=qteG;
+									this.ag.locationGold.remove(myPosition); // Trésor entierement ramassé
+								}
+								else {
+									this.ag.locationGold.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteG-this.ag.freeSpaceGoldPerso));
+									this.ag.freeSpaceGoldPerso=0;
+									this.ag.finition = true;
+								}
+						    } catch (Exception e) {
+							      System.out.println("Pas de gold ici.");
+							      System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
+							      this.ag.locationGold.remove(myPosition); // Trésor entierement ramassé
+						    }
 						}
 						if(this.ag.expertise.equals(Observation.DIAMOND)) {
 							if(this.ag.freeSpaceDiamPerso < this.ag.objectif) {
@@ -267,11 +287,13 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 										if(persD == this.ag.getAID()) {
 											currentAgentId = j;
 											int difOpt = 0;
-											if(valTreasure > this.ag.freeSpaceDiamPerso) {
-												difOpt = Math.abs(this.ag.optTreasure - this.ag.freeSpaceDiamPerso);
-											}else {
-												difOpt = Math.abs(this.ag.optTreasure - valTreasure);
+											float missOpt = (this.ag.optTreasure*this.ag.backpackDiam) - (this.ag.backpackDiam - this.ag.freeSpaceDiamPerso);
+											difOpt = (int) Math.abs(missOpt - valTreasure);
+											
+											if(this.ag.treasureHarvested.getLeft().contains(locD)) {
+												difOpt += 10000;
 											}
+											
 											matrix[i][j] = (int) dist + difOpt;
 										}else {
 											int difOpt = 0;
@@ -294,12 +316,18 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 								int[][] assignment = ha.findOptimalAssignment();
 								
 								int col = 0;
-								for(int ii=0; i < assignment.length; ii++) {
+								for(int ii=0; ii < assignment.length; ii++) {
 									if(assignment[ii][1] == currentAgentId) {
 										col = ii;
+										break;
 									}
 								}
-								this.ag.harvestObj = (String) this.ag.locationDiam.keySet().toArray()[col];
+								this.ag.scoreObj = matrix[col][currentAgentId];
+								try {
+									this.ag.harvestObj = (String) this.ag.locationDiam.keySet().toArray()[col];
+								}catch (Exception e) {
+									this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[0];
+								}
 							}
 							
 						// Deuxième partie : Gold
@@ -337,22 +365,18 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 										int valTreasure = (int) this.ag.locationGold.get(locG).getRight();
 										for(AID persG : this.ag.PersoGold.keySet()) {
 											int dist = this.myMap.getShortestPath(myPosition, locG).size();
-											if(persG == this.ag.getAID()) {
+											if(persG.equals(this.ag.getAID())) {
 												currentAgentId = j;
 												int difOpt = 0;
-												if(valTreasure > this.ag.freeSpaceGoldPerso) {
-													difOpt = Math.abs(this.ag.optTreasure - this.ag.freeSpaceGoldPerso);
-												}else {
-													difOpt = Math.abs(this.ag.optTreasure - valTreasure);
+												float missOpt = (this.ag.optTreasure*this.ag.backpackGold) - (this.ag.backpackGold - this.ag.freeSpaceGoldPerso);
+												difOpt = (int) Math.abs(missOpt - valTreasure);
+												if(this.ag.treasureHarvested.getRight().contains(locG)) {
+													difOpt += 10000;
 												}
 												matrix[i][j] = (int) dist + difOpt;
 											}else {
 												int difOpt = 0;
-												if(valTreasure > (int) this.ag.PersoGold.get(persG).getRight()) {
-													difOpt = Math.abs(this.ag.optTreasure - (int) this.ag.PersoGold.get(persG).getRight());
-												}else {
-													difOpt = Math.abs(this.ag.optTreasure - valTreasure);
-												}
+												difOpt = Math.abs(this.ag.optTreasure*(int) this.ag.PersoGold.get(persG).getRight() - valTreasure);
 												if(dist > dMoy) {
 													matrix[i][j] = (int) (1.5 * dist + difOpt);
 												}else {
@@ -367,13 +391,18 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 									int[][] assignment = ha.findOptimalAssignment();
 									
 									int col = 0;
-									for(int ii=0; i < assignment.length; ii++) {
+									for(int ii=0; ii < assignment.length; ii++) {
 										if(assignment[ii][1] == currentAgentId) {
 											col = ii;
 											break;
 										}
 									}
-									this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[col];
+									this.ag.scoreObj = matrix[col][currentAgentId];
+									try {
+										this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[col];
+									}catch (Exception e) {
+										this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[0];
+									}
 								}	
 							}
 						}
@@ -381,12 +410,13 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 				}
 				
 				if(this.ag.recolte) {
-
 					// System.out.println("Calcul chemin pour récolter le plus proche !");
 					System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
 					if(!this.ag.harvestObj.equals(myPosition)) {
 						nextNode=this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
-					}
+					}/*else {
+						nextNode = myPosition;
+					}*/
 				}
 				else if(this.openNodes.isEmpty()){
 					//Explo finished
@@ -423,64 +453,25 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 						
 					}
 				}
-			
-				/***************************************************
-				** 		ADDING the API CALL to illustrate their use **
-				*****************************************************/
-				/*
-				//list of observations associated to the currentPosition
-				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
-				
-				//example related to the use of the backpack for the treasure hun
-				Boolean b=false;
-				for(Couple<Observation,Integer> o:lObservations){
-					switch (o.getLeft()) {
-					case DIAMOND:case GOLD:
-
-						System.out.println(this.myAgent.getLocalName()+" - My treasure type is : "+((AbstractDedaleAgent) this.myAgent).getMyTreasureType());
-						System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-						System.out.println(this.myAgent.getLocalName()+" - My expertise is: "+((AbstractDedaleAgent) this.myAgent).getMyExpertise());
-						System.out.println(this.myAgent.getLocalName()+" - I try to open the safe: "+((AbstractDedaleAgent) this.myAgent).openLock(Observation.GOLD));
-						System.out.println(this.myAgent.getLocalName()+" - Value of the treasure on the current position: "+o.getLeft() +": "+ o.getRight());
-						System.out.println(this.myAgent.getLocalName()+" - The agent grabbed : "+((AbstractDedaleAgent) this.myAgent).pick());
-						System.out.println(this.myAgent.getLocalName()+" - the remaining backpack capacity is: "+ ((AbstractDedaleAgent) this.myAgent).getBackPackFreeSpace());
-						b=true;
-						break;
-					default:
-						break;
+				if(nextNode == null || nextNode.equals(myPosition)) {
+					if(!this.ag.harvestObj.equals(myPosition) && this.ag.recolte) {
+						nextNode = this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
+						this.ag.placeWantToGo=nextNode;
+						((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+					}else {
+						this.ag.harvestObj = null;
 					}
-				}
-
-				//If the agent picked (part of) the treasure
-				if (b){
-					List<Couple<String,List<Couple<Observation,Integer>>>> lobs2=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-					System.out.println(this.myAgent.getLocalName()+" - State of the observations after picking "+lobs2);
+				}else if(!wait && !this.ag.finition) {
+					this.ag.placeWantToGo=nextNode;
+					System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| next : " + nextNode);
 					
-					//Trying to store everything in the tanker
-					System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-					System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
-					System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
+					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 					
-				}
-				
-				//Trying to store everything in the tanker
-				//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-				//System.out.println(this.myAgent.getLocalName()+" - The agent tries to transfer is load into the Silo (if reachable); succes ? : "+((AbstractDedaleAgent)this.myAgent).emptyMyBackPack("Silo"));
-				//System.out.println(this.myAgent.getLocalName()+" - My current backpack capacity is:"+ ((AbstractDedaleAgent)this.myAgent).getBackPackFreeSpace());
-
-				*/
-				/************************************************
-				 * 				END API CALL ILUSTRATION
-				 *************************************************/
-				if(!wait && !this.ag.finition) {
 					if(this.ag.recolte) {	// Pour la phase de récolte on mets la variable a null pour montrer qu'on a atteint l'objectif
-						if(this.ag.harvestObj == nextNode) {
+						if(this.ag.harvestObj.equals(myPosition)) {
 							this.ag.harvestObj = null;
 						}
 					}
-					this.ag.placeWantToGo=nextNode;
-					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 				}
 			}
 			this.ag.updateMap(this.myMap);
