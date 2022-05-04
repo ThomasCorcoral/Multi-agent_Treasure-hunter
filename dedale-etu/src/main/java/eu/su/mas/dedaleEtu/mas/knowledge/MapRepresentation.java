@@ -126,6 +126,23 @@ public class MapRepresentation implements Serializable {
 
 		}
 	}
+	
+	public synchronized Graph getGraph() {
+		return this.g;
+	}
+	
+	public synchronized boolean removeNode(String id) {
+		if (this.g.getNode(id)!=null){
+			this.g.edges().forEach(edge -> {
+				if(edge.getNode0().getId() == id || edge.getNode1().getId() == id) {
+					this.g.removeEdge(edge);
+				}
+			});
+			this.g.removeNode(id);
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Compute the shortest Path from idFrom to IdTo. The computation is currently not very efficient

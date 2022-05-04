@@ -87,7 +87,8 @@ public class SendMap extends OneShotBehaviour{
 		}
 		//SerializableAgent sa=new SerializableAgent(new AgentRepresentation(this.a));
 		SerializableSimpleGraph<String, MapAttribute> sa = updateSendMap(myMap.getSerializableGraph());
-		sAgent=new SerializableAgent(this.a,sa);
+		String myPosition=((AbstractDedaleAgent)this.a).getCurrentPosition();
+		sAgent=new SerializableAgent(this.a,sa, myPosition);
 		try {					
 			msg.setContentObject(sAgent);
 		} catch (IOException e) {

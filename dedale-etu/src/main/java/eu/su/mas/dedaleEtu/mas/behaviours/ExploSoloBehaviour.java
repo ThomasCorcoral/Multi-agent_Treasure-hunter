@@ -82,9 +82,10 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 			this.myMap= new MapRepresentation();
 		}
 		this.response=0;
+		boolean wait = false; // Passage à la phase Harvest
 		for(int k=0;k<3;k++) {
-			boolean wait = false; // Juste pour attendre un tour quand on passe à la phase Harvest
 			//0) Retrieve the current position
+			wait = false;
 			String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 			ArrayList<String> aEliminer=new ArrayList<String>();
 			for(String cle:noGo.keySet()) {
@@ -167,7 +168,9 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 				}
 				
 				
-				
+				/********************************************
+				 * SELECTION D'UN NOUVEL OBJECTIF (RECOLTE) *
+				 ********************************************/
 				if(this.ag.recolte) {
 					if(this.ag.objHarvest == null) {
 						if(this.ag.expertise.equals(Observation.DIAMOND)) {
@@ -176,318 +179,85 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 							this.ag.objHarvest = new String[this.ag.locationGold.size()];
 						}
 					}
-					
 					// Partie récolte si l'agent est arrivé sur l'objectif
-					// System.out.println("Calcul objectif de récolte !");
 					if(this.ag.harvestObj == null) {
-						
-						System.out.println("Dernier objectif de récolte atteint !");
-						
-						if(this.ag.expertise.equals(Observation.DIAMOND)) {
-							try {
-								this.ag.openLock(Observation.DIAMOND);
-								this.ag.pick();
-								int qteD = (int) this.ag.locationDiam.get(myPosition).getRight();
-								if(qteD <=this.ag.freeSpaceDiamPerso) {
-									this.ag.treasureHarvested.getRight().add(myPosition);
-									this.ag.freeSpaceDiamPerso-=qteD;
-									this.ag.locationDiam.remove(myPosition); // Trésor entierement ramassé
-								}
-								else {
-									this.ag.locationDiam.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteD-this.ag.freeSpaceDiamPerso));
-									this.ag.freeSpaceDiamPerso=0;
-									this.ag.finition = true;
-								}
-						    } catch (Exception e) {
-							      System.out.println("Pas de diamants ici.");
-							      System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
-							      this.ag.locationDiam.remove(myPosition); // Trésor entierement ramassé
-						    }
-						}else {
-							try {
-								this.ag.openLock(Observation.GOLD);
-								this.ag.pick();
-								int qteG = (int) this.ag.locationGold.get(myPosition).getRight();
-								if(qteG <=this.ag.freeSpaceGoldPerso) {
-									this.ag.treasureHarvested.getLeft().add(myPosition);
-									this.ag.freeSpaceGoldPerso-=qteG;
-									this.ag.locationGold.remove(myPosition); // Trésor entierement ramassé
-								}
-								else {
-									this.ag.locationGold.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteG-this.ag.freeSpaceGoldPerso));
-									this.ag.freeSpaceGoldPerso=0;
-									this.ag.finition = true;
-								}
-						    } catch (Exception e) {
-							      System.out.println("Pas de gold ici.");
-							      System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
-							      this.ag.locationGold.remove(myPosition); // Trésor entierement ramassé
-						    }
-						}
-						if(this.ag.expertise.equals(Observation.DIAMOND)) {
-							if(this.ag.freeSpaceDiamPerso < this.ag.objectif) {
-								this.ag.finition = true;
-							}
-						}else {
-							if(this.ag.freeSpaceGoldPerso < this.ag.objectif) {
-								this.ag.finition = true;
-							}
-						}
-						
-						this.ag.harvestObj = "-1";
+						this.ag.TreasureHarvested(myPosition);
 					}
-
-					// System.out.println(this.ag.harvestObj);
 					// Partie définition du prochain objectif
-					if(this.ag.harvestObj.startsWith("-")) {
-						
-						// System.out.println("Définition d'un nouvel objectif de récolte !");
-						
-						// Première partie : Diamant
-						
-						if(this.ag.expertise.equals(Observation.DIAMOND)) {
-							
-							// System.out.println("Recherche diamant !");
-							
-							if(this.ag.PersoDiam.size() == 1) { // L'agent est le seul à récolter des diamants
-								
-								// System.out.println("Seul à récolter des diamants !");
-								
-								int minDistDiams = -1;
-								for(String locD : this.ag.locationDiam.keySet()) {
-									int currMin = (int) this.ag.locationDiam.get(locD).getRight();
-									if(minDistDiams == -1 || currMin < minDistDiams) {
-										minDistDiams = currMin;
-										this.ag.harvestObj = locD;
-									}
-								}
-							}else { // Il y a plusieurs agents qui veulent la même ressource
-								
-								// System.out.println("Récolte des diamants à plusieurs !");
-								
-								float dMoy = 0;
-								for(String locD : this.ag.locationDiam.keySet()) {
-									dMoy += this.myMap.getShortestPath(myPosition, locD).size();
-								}
-								dMoy /= this.ag.locationDiam.size();
-								
-								int currentAgentId = -1;
-								int size = Math.max(this.ag.locationDiam.size(), this.ag.PersoDiam.size());
-								int[][] matrix = new int[size][size];
-								for(int i = 0; i<size;i++){
-							        Arrays.fill(matrix[i], 0);
-						        }
-								int i = 0;
-								int j = 0;
-								for(String locD : this.ag.locationDiam.keySet()) {
-									j=0;
-									int valTreasure = (int) this.ag.locationDiam.get(locD).getRight();
-									for(AID persD : this.ag.PersoDiam.keySet()) {
-										int dist = this.myMap.getShortestPath(myPosition, locD).size();
-										if(persD == this.ag.getAID()) {
-											currentAgentId = j;
-											int difOpt = 0;
-											float missOpt = (this.ag.optTreasure*this.ag.backpackDiam) - (this.ag.backpackDiam - this.ag.freeSpaceDiamPerso);
-											difOpt = (int) Math.abs(missOpt - valTreasure);
-											
-											if(this.ag.treasureHarvested.getLeft().contains(locD)) {
-												difOpt += 10000;
-											}
-											
-											matrix[i][j] = (int) dist + difOpt;
-										}else {
-											int difOpt = 0;
-											if(valTreasure > (int) this.ag.PersoDiam.get(persD).getRight()) {
-												difOpt = Math.abs(this.ag.optTreasure - (int) this.ag.PersoDiam.get(persD).getRight());
-											}else {
-												difOpt = Math.abs(this.ag.optTreasure - valTreasure);
-											}
-											if(dist > dMoy) {
-												matrix[i][j] = (int) (1.5 * dist + difOpt);
-											}else {
-												matrix[i][j] = (int) (0.75 * dist + difOpt);
-											}
-										}
-										j+=1;
-									}
-									i+=1;
-								}
-								HungarianAlgo ha = new HungarianAlgo(matrix);
-								int[][] assignment = ha.findOptimalAssignment();
-								
-								int col = 0;
-								for(int ii=0; ii < assignment.length; ii++) {
-									if(assignment[ii][1] == currentAgentId) {
-										col = ii;
-										break;
-									}
-								}
-								this.ag.scoreObj = matrix[col][currentAgentId];
-								try {
-									this.ag.harvestObj = (String) this.ag.locationDiam.keySet().toArray()[col];
-								}catch (Exception e) {
-									this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[0];
-								}
-							}
-							
-						// Deuxième partie : Gold
-							
-						}else if(this.ag.expertise.equals(Observation.GOLD)){ // Partie Gold
-							// System.out.println("Récolte des golds seul !");
-							if(this.ag.expertise.equals(Observation.GOLD)) {
-								if(this.ag.PersoGold.size() == 1) { // L'agent est le seul à récolter du gold
-									int minDistGold = -1;
-									for(String locG : this.ag.locationGold.keySet()) {
-										int currMin = (int) this.ag.locationGold.get(locG).getRight();
-										if(minDistGold == -1 || currMin < minDistGold) {
-											minDistGold = currMin;
-											this.ag.harvestObj = locG;
-										}
-									}
-								}else { // Il y a plusieurs agents qui veulent la même ressource
-									// System.out.println("Récolte des golds à plusieurs !");
-									float dMoy = 0;
-									for(String locG : this.ag.locationGold.keySet()) {
-										dMoy += this.myMap.getShortestPath(myPosition, locG).size();
-									}
-									dMoy /= this.ag.locationGold.size();
-									
-									int currentAgentId = -1;
-									int size = Math.max(this.ag.locationGold.size(), this.ag.PersoGold.size());
-									int[][] matrix = new int[size][size];
-									for(int i = 0; i<size;i++){
-								        Arrays.fill(matrix[i], 0);
-							        }
-									int i = 0;
-									int j = 0;
-									for(String locG : this.ag.locationGold.keySet()) {
-										j=0;
-										int valTreasure = (int) this.ag.locationGold.get(locG).getRight();
-										for(AID persG : this.ag.PersoGold.keySet()) {
-											int dist = this.myMap.getShortestPath(myPosition, locG).size();
-											if(persG.equals(this.ag.getAID())) {
-												currentAgentId = j;
-												int difOpt = 0;
-												float missOpt = (this.ag.optTreasure*this.ag.backpackGold) - (this.ag.backpackGold - this.ag.freeSpaceGoldPerso);
-												difOpt = (int) Math.abs(missOpt - valTreasure);
-												if(this.ag.treasureHarvested.getRight().contains(locG)) {
-													difOpt += 10000;
-												}
-												matrix[i][j] = (int) dist + difOpt;
-											}else {
-												int difOpt = 0;
-												difOpt = Math.abs(this.ag.optTreasure*(int) this.ag.PersoGold.get(persG).getRight() - valTreasure);
-												if(dist > dMoy) {
-													matrix[i][j] = (int) (1.5 * dist + difOpt);
-												}else {
-													matrix[i][j] = (int) (0.75 * dist + difOpt);
-												}
-											}
-											j+=1;
-										}
-										i+=1;
-									}
-									HungarianAlgo ha = new HungarianAlgo(matrix);
-									int[][] assignment = ha.findOptimalAssignment();
-									
-									int col = 0;
-									for(int ii=0; ii < assignment.length; ii++) {
-										if(assignment[ii][1] == currentAgentId) {
-											col = ii;
-											break;
-										}
-									}
-									this.ag.scoreObj = matrix[col][currentAgentId];
-									try {
-										this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[col];
-									}catch (Exception e) {
-										this.ag.harvestObj = (String) this.ag.locationGold.keySet().toArray()[0];
-									}
-								}	
-							}
-						}
+					if(this.ag.harvestObj.startsWith("-") && this.ag.recolte) {
+						System.out.println("Définition d'un nouvel objectif de récolte !");
+						this.ag.UpdateHarvest(myPosition);
 					}
 				}
 				
-				if(this.ag.recolte) {
-					// System.out.println("Calcul chemin pour récolter le plus proche !");
-					System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.ag.harvestObj);
+				/********************************************
+				 *  *
+				 ********************************************/
+				if(this.ag.finition) {
+					if(this.ag.finitionObj == null) {
+						this.ag.defineFinitionObjective();
+					}
+					
+					List<String> nextMove = this.myMap.getShortestPath(myPosition, this.ag.finitionObj);
+					
+					if(myPosition != this.ag.finitionObj && nextMove.size() > 0) {
+						nextNode = nextMove.get(0);
+					}else {
+						//System.out.println("TEST DELETE");
+						nextNode = myPosition; // StandBy
+					}
+				}else if(this.ag.recolte) {
 					if(!this.ag.harvestObj.equals(myPosition)) {
 						nextNode=this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
-					}/*else {
-						nextNode = myPosition;
-					}*/
-				}
-				else if(this.openNodes.isEmpty()){
-					//Explo finished
-					//System.out.println("Exploration successufully done, behaviour removed.");
-					this.ag.recolte=true;
-					if(this.ag.expertise.equals(Observation.DIAMOND)) {
-						this.ag.objectif = (float) (this.ag.freeSpaceDiamPerso - this.ag.optTreasure*0.95*this.ag.freeSpaceDiamPerso);
 					}else {
-						this.ag.objectif = (float) (this.ag.freeSpaceGoldPerso - this.ag.optTreasure*0.95*this.ag.freeSpaceGoldPerso);
+						System.out.println("Ancien obj : " + this.ag.oldHarvestObj + " | nvl obj : " + this.ag.harvestObj);
+						this.ag.oldHarvestObj= this.ag.harvestObj; 
+						this.ag.harvestObj = null;
+						
 					}
+				}else if(this.openNodes.isEmpty()){
+					//Explo fini
 					wait = true;
 				}else{
-					//4) select next move.
-					//4.1 If there exist one open node directly reachable, go for it,
-					//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
 					if (nextNode==null){
-						//no directly accessible openNode
-						//chose one, compute the path and take the first step.
-						
-						//ArrayList<String> listeNodesToGo = ordonnOpenNodes(myPosition);
 						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
 						int ii=1;
 						while(ii<this.openNodes.size() && noGo.containsKey(nextNode)) {
 							String elem = this.openNodes.get(0);
 							this.openNodes.add(elem);
 							this.openNodes.remove(0);
-							
 							nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
 							ii+=1;
 						}
 						if(noGo.containsKey(nextNode)) {
 							nextNode=myPosition;
 						}
-						
 					}
 				}
-				if(nextNode == null || nextNode.equals(myPosition)) {
-					if(!this.ag.harvestObj.equals(myPosition) && this.ag.recolte) {
-						nextNode = this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
+				
+				if(this.ag.recolte) {
+					if(!(this.ag.harvestObj == null)) { // objectif non atteint
 						this.ag.placeWantToGo=nextNode;
 						((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
-					}else {
-						this.ag.harvestObj = null;
 					}
-				}else if(!wait && !this.ag.finition) {
+				}else if(!wait){
 					this.ag.placeWantToGo=nextNode;
-					System.out.println(this.ag.getLocalName() + " : myposition : " + myPosition + "| next : " + nextNode);
-					
 					((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
-					
-					if(this.ag.recolte) {	// Pour la phase de récolte on mets la variable a null pour montrer qu'on a atteint l'objectif
-						if(this.ag.harvestObj.equals(myPosition)) {
-							this.ag.harvestObj = null;
-						}
-					}
+					this.ag.MovesHistory.add(nextNode);
 				}
 			}
 			this.ag.updateMap(this.myMap);
+			if(wait) {
+				break;
+			}
 		}
 		
 		
 		Map<String, ArrayList> dicoExplo = this.ag.dico;
 		//System.out.println("Nombre d'agents croisés : "+dicoExplo.size()+" pour "+this.ag.getLocalName());
 		//System.out.println("Nombre de noeuds ouverts : "+this.openNodes.size()+" pour "+this.ag.getLocalName());
-        if(!this.ag.recolte && ((this.openNodes.size()<6 && dicoExplo.size()>=0.9*this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>60*1000) || System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 )) {
-            System.out.println("START HARVEST "+this.ag.getLocalName());
-        	this.ag.recolte=true;
-        	this.ag.optTreasure = (this.ag.qteGold + this.ag.qteDiam) /  (this.ag.freeSpaceGold+this.ag.freeSpaceDiam);
-        	if(this.ag.optTreasure > 1) {
-        		this.ag.optTreasure = 1;
-			}
+        if(wait || (!this.ag.recolte && ((this.openNodes.size()<6 && dicoExplo.size()==this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000) /*|| System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 */))) {
+        	this.ag.transisitonHarvest();
         }
 	}
 	public int onEnd() {

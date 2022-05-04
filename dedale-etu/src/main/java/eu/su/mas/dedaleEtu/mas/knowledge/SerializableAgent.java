@@ -54,9 +54,11 @@ public class SerializableAgent implements Serializable {
 	public String harvestObj="-1";
 	
 	public int scoreObj;
+	
+	public String agentPosition;
 
 	
-	public SerializableAgent(AgentOptimized a,SerializableSimpleGraph<String, MapAttribute> sg) {
+	public SerializableAgent(AgentOptimized a,SerializableSimpleGraph<String, MapAttribute> sg, String myPosition) {
 		this.sg = sg;
 		this.locationGold=a.locationGold;
 		this.locationDiam=a.locationDiam;
@@ -68,6 +70,7 @@ public class SerializableAgent implements Serializable {
 		this.difOpt = a.difOpt;
 		this.harvestObj = a.harvestObj;
 		this.scoreObj = a.scoreObj;
+		this.agentPosition = myPosition;
 	}
 
 
