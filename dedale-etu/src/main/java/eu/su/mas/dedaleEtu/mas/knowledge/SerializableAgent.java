@@ -56,6 +56,11 @@ public class SerializableAgent implements Serializable {
 	public int scoreObj;
 	
 	public String agentPosition;
+	
+	public AID agentId;
+	
+	public int freeSpaceGoldPerso;
+	public int freeSpaceDiamPerso;
 
 	
 	public SerializableAgent(AgentOptimized a,SerializableSimpleGraph<String, MapAttribute> sg, String myPosition) {
@@ -71,6 +76,9 @@ public class SerializableAgent implements Serializable {
 		this.harvestObj = a.harvestObj;
 		this.scoreObj = a.scoreObj;
 		this.agentPosition = myPosition;
+		this.agentId = a.getAID();
+		this.freeSpaceDiamPerso = a.freeSpaceDiamPerso;
+		this.freeSpaceGoldPerso = a.freeSpaceGoldPerso;
 	}
 
 

@@ -2,4 +2,7 @@ mapname:map2018MultiTypes
 agentCollect:1stAgent:3:free:42:12:0:1:2
 agentCollect:2ndAgent:3:free:13:20:0:2:2
 agentCollect:3rdAgent:3:free:25:30:0:1:2
+agentCollect:4thAgent:3:free:32:12:0:1:2
+agentCollect:5thAgent:3:free:18:28:0:1:2
+agentCollect:6thAgent:3:free:45:5:0:1:2
 HumanControlled:ImHere:3:free:-1:-1:1:1:1

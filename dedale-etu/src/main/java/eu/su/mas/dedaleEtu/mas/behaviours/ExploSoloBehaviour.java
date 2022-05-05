@@ -193,27 +193,37 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 				/********************************************
 				 *  *
 				 ********************************************/
-				if(this.ag.finition) {
-					if(this.ag.finitionObj == null) {
-						this.ag.defineFinitionObjective();
-					}
-					
-					List<String> nextMove = this.myMap.getShortestPath(myPosition, this.ag.finitionObj);
-					
-					if(myPosition != this.ag.finitionObj && nextMove.size() > 0) {
-						nextNode = nextMove.get(0);
-					}else {
-						//System.out.println("TEST DELETE");
-						nextNode = myPosition; // StandBy
+				if(this.ag.finition || this.ag.searchAgents) {
+					//System.out.println(this.ag.dico.size());
+					//System.out.println(this.ag.list_agentNames.size());
+					nextNode = this.ag.defineRandomObjective(myPosition, nextNode);
+					if(this.ag.finition) {
+						this.ag.count_stop++;
+						if(this.ag.count_stop == 20) {
+							//response = -1;
+							this.ag.printScore();
+
+						}
 					}
 				}else if(this.ag.recolte) {
+					
+					if(!this.ag.placeWantToGo.equals(myPosition)) {
+						this.ag.lock_turn++;
+					}
+					
+					if(this.ag.lock_turn > 3) {
+						this.ag.randomMove(10, nextNode);
+						this.ag.lock_turn = 0;
+						myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+					}
+					
 					if(!this.ag.harvestObj.equals(myPosition)) {
 						nextNode=this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
 					}else {
-						System.out.println("Ancien obj : " + this.ag.oldHarvestObj + " | nvl obj : " + this.ag.harvestObj);
+						System.out.println("----------------------------------------------------");
+						System.out.println(this.ag.getLocalName() + " : ancien obj : " + this.ag.oldHarvestObj + " | nvl obj : " + this.ag.harvestObj);
 						this.ag.oldHarvestObj= this.ag.harvestObj; 
 						this.ag.harvestObj = null;
-						
 					}
 				}else if(this.openNodes.isEmpty()){
 					//Explo fini
@@ -239,6 +249,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 					if(!(this.ag.harvestObj == null)) { // objectif non atteint
 						this.ag.placeWantToGo=nextNode;
 						((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+						this.ag.MovesHistory.add(nextNode);
 					}
 				}else if(!wait){
 					this.ag.placeWantToGo=nextNode;
@@ -256,11 +267,21 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		Map<String, ArrayList> dicoExplo = this.ag.dico;
 		//System.out.println("Nombre d'agents croisés : "+dicoExplo.size()+" pour "+this.ag.getLocalName());
 		//System.out.println("Nombre de noeuds ouverts : "+this.openNodes.size()+" pour "+this.ag.getLocalName());
-        if(wait || (!this.ag.recolte && ((this.openNodes.size()<6 && dicoExplo.size()==this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000) /*|| System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 */))) {
-        	this.ag.transisitonHarvest();
-        }
+        if(wait || (!this.ag.finition && !this.ag.recolte && ((this.openNodes.size()<6 && dicoExplo.size()==this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000) /*|| System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 */))) {
+        	if(wait || !(dicoExplo.size()==this.ag.list_agentNames.size())) {
+        		this.ag.searchAgents = true;
+        	}else {
+        		this.ag.searchAgents = false;
+        		this.ag.finitionObj = null;
+        		this.ag.defineBestComposition();
+        		this.ag.transisitonHarvest();
+        	}
+    	}
 	}
 	public int onEnd() {
+		if(response == -1) {
+			this.ag.doDelete();
+		}
 		return response;
 	}
 

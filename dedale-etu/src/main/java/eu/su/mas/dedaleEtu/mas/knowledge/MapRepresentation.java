@@ -134,8 +134,10 @@ public class MapRepresentation implements Serializable {
 	public synchronized boolean removeNode(String id) {
 		if (this.g.getNode(id)!=null){
 			this.g.edges().forEach(edge -> {
-				if(edge.getNode0().getId() == id || edge.getNode1().getId() == id) {
-					this.g.removeEdge(edge);
+				if(edge != null) {
+					if(edge.getNode0().getId() == id || edge.getNode1().getId() == id) {
+						this.g.removeEdge(edge);
+					}
 				}
 			});
 			this.g.removeNode(id);
