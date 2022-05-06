@@ -354,7 +354,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	
 	
 	public void commonObjective(String otherAgentPosition, String myPosition) {
-		System.out.println("INTERBLOCAGE");
+		//System.out.println("INTERBLOCAGE");
 		if(this.placeWantToGo != myPosition) {
 			this.lockMap = this.myMap;
 			this.interlock = true;
@@ -365,18 +365,18 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				}
 			});
 			try {
-				System.out.println("LockMap : " + myPosition + " | " + this.harvestObj);
+				//System.out.println("LockMap : " + myPosition + " | " + this.harvestObj);
 				myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
 				this.pathlock = this.lockMap.getShortestPath(myPosition, this.harvestObj);
 				if(this.pathlock == null) {
-					System.out.println("PAS ITINERAIRE BIS");
+					//System.out.println("PAS ITINERAIRE BIS");
 					/*this.interlock = false;
 					for(int i = 0; i < 5; i++) {
 						this.placeWantToGo=this.MovesHistory.get(this.MovesHistory.size()-1-i);
 						((AbstractDedaleAgent)this).moveTo(this.placeWantToGo);
 					}*/
 				}else {
-					System.out.println("ITINERAIRE BIS");
+					//System.out.println("ITINERAIRE BIS");
 					int go = Math.min(5, this.pathlock.size());
 					for(int i = 0; i < go; i++) {
 						myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
@@ -385,7 +385,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 					}
 				}
 			}catch(Exception e) {
-				System.out.println("PAS ITINERAIRE BIS");
+				//System.out.println("PAS ITINERAIRE BIS");
 				this.interlock = false;
 				//this.randomMove(5, this.placeWantToGo);
 				
@@ -672,7 +672,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				this.coopHarvest(this.locationGold, this.PersoGold, myPosition, this.backpackGold, this.freeSpaceGoldPerso, this.treasureHarvested.getRight());
 			}	
 		}
-		System.out.println(this.getLocalName() + " : Nvl objectif - " + this.harvestObj);
+		//System.out.println(this.getLocalName() + " : Nvl objectif - " + this.harvestObj);
 	}
 	
 	public void UpdateExpertise() {

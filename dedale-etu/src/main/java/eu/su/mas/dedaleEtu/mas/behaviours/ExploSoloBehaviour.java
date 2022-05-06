@@ -249,8 +249,8 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 					if(!this.ag.harvestObj.equals(myPosition)) {
 						nextNode=this.myMap.getShortestPath(myPosition, this.ag.harvestObj).get(0);
 					}else {
-						System.out.println("----------------------------------------------------");
-						System.out.println(this.ag.getLocalName() + " : ancien obj : " + this.ag.oldHarvestObj + " | nvl obj : " + this.ag.harvestObj);
+						//System.out.println("----------------------------------------------------");
+						//System.out.println(this.ag.getLocalName() + " : ancien obj : " + this.ag.oldHarvestObj + " | nvl obj : " + this.ag.harvestObj);
 						this.ag.oldHarvestObj= this.ag.harvestObj; 
 						this.ag.harvestObj = null;
 					}
