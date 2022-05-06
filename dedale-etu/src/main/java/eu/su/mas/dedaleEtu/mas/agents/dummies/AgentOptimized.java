@@ -73,7 +73,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public int optTreasure=0;
 	public long tempsExplo=-1;
 	public Couple<ArrayList,ArrayList> treasureHarvested=new Couple<ArrayList,ArrayList>(new ArrayList<String>(),new ArrayList<String>());// Partie droite : trésors Gold récoltés et partie gauche : trésor diamant récoltés
-	public long timeout=2*60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
+	public long timeout=2*60+1*30;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
 	public float difOpt = -1;
 	public String harvestObj="-1";
 	public boolean finition = false;
@@ -370,11 +370,11 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				this.pathlock = this.lockMap.getShortestPath(myPosition, this.harvestObj);
 				if(this.pathlock == null) {
 					System.out.println("PAS ITINERAIRE BIS");
-					this.interlock = false;
+					/*this.interlock = false;
 					for(int i = 0; i < 5; i++) {
 						this.placeWantToGo=this.MovesHistory.get(this.MovesHistory.size()-1-i);
 						((AbstractDedaleAgent)this).moveTo(this.placeWantToGo);
-					}
+					}*/
 				}else {
 					System.out.println("ITINERAIRE BIS");
 					int go = Math.min(5, this.pathlock.size());
@@ -387,7 +387,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			}catch(Exception e) {
 				System.out.println("PAS ITINERAIRE BIS");
 				this.interlock = false;
-				this.randomMove(5, this.placeWantToGo);
+				//this.randomMove(5, this.placeWantToGo);
 				
 				/*for(int i = 0; i < 5; i++) {
 					
