@@ -73,7 +73,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public int optTreasure=0;
 	public long tempsExplo=-1;
 	public Couple<ArrayList,ArrayList> treasureHarvested=new Couple<ArrayList,ArrayList>(new ArrayList<String>(),new ArrayList<String>());// Partie droite : trésors Gold récoltés et partie gauche : trésor diamant récoltés
-	public long timeout=60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
+	public long timeout=2*60;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
 	public float difOpt = -1;
 	public String harvestObj="-1";
 	public boolean finition = false;
