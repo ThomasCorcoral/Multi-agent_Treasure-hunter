@@ -224,6 +224,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		this.updatePersoTreasure(sAg.getPersoDiam(), sAg.getPersoGold());
 		this.updateFreeSpaces();
 		String myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
+		
+		//sAg.getTreasuresHarvested()
 
 		if(!this.recolte) {
 			UpdateExpertise();
@@ -250,7 +252,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			
 			
 			// Mise à jour les trésors ramassées par l'autre agent
-			this.updateHarvestedOtherAgent(sAg.getLocationDiam(), sAg.getLocationGold());
+			this.updateHarvestedOtherAgent(sAg.getLocationDiam(), sAg.getLocationGold(), sAg.getTreasuresHarvested());
 			
 			this.updateLocalLocation();
 		}else if(this.finition) {
@@ -279,9 +281,14 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	 * @param locGoldsAg : Position des golds pour l'autre agent
 	 */
 	public void updateLocation(HashMap<String, Couple> locDiamsAg, HashMap<String, Couple> locGoldsAg) {
+		
+		
+		
+		
+		
 		for(String loc : locDiamsAg.keySet()) {
 			if(!this.locationDiam.containsKey(loc)) {
-				if(!this.recolte) {
+				if(!this.treasureHarvested.getLeft().contains(loc)) {
 					this.locationDiam.put(loc, locDiamsAg.get(loc));
 					this.qteDiam+=(int)locDiamsAg.get(loc).getRight();
 				}
@@ -294,7 +301,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		
 		for(String loc : locGoldsAg.keySet()) {
 			if(!this.locationGold.containsKey(loc)) {
-				if(!this.recolte) {
+				if(!this.treasureHarvested.getRight().contains(loc)) {
 					this.locationGold.put(loc, locGoldsAg.get(loc));
 					this.qteGold+=(int)locGoldsAg.get(loc).getRight();
 				}
@@ -313,9 +320,6 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	 * @param persoGoldsAg
 	 */
 	public void updatePersoTreasure(HashMap<AID, Couple> persoDiamsAg, HashMap<AID, Couple> persoGoldsAg) {
-		
-		
-		
 		for(AID persG : persoGoldsAg.keySet()) {
 			if(!this.PersoGold.containsKey(persG) || ((Long)this.PersoGold.get(persG).getLeft() > (Long)persoGoldsAg.get(persG).getLeft() && (Long)persoGoldsAg.get(persG).getLeft() >= 0)) {
 				this.PersoGold.put(persG,persoGoldsAg.get(persG));
@@ -383,28 +387,44 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			}catch(Exception e) {
 				System.out.println("PAS ITINERAIRE BIS");
 				this.interlock = false;
-				for(int i = 0; i < 5; i++) {
+				this.randomMove(5, this.placeWantToGo);
+				
+				/*for(int i = 0; i < 5; i++) {
+					
+					
+					
 					this.placeWantToGo=this.MovesHistory.get(this.MovesHistory.size()-1-i);
+					this.placeWantToGo=this.lockMap.getShortestPath(myPosition, this.harvestObj).get(0);
 					((AbstractDedaleAgent)this).moveTo(this.placeWantToGo);
-				}
+				}*/
 			}
 		}
 	}
 	
-	public void updateHarvestedOtherAgent(HashMap<String, Couple> locDiamsAg, HashMap<String, Couple> locGoldsAg) {
+	public void updateHarvestedOtherAgent(HashMap<String, Couple> locDiamsAg, HashMap<String, Couple> locGoldsAg, Couple<ArrayList, ArrayList> harvestedSAg) {
+		
+		// Parcoure tous trésors de moi. SI L'AUTRE a HARVEST. SI L'AUTRE A PAS DANS SES LOCATION - SUPPRIME
+		
+
 		if(this.expertise.equals(Observation.DIAMOND)) {
-			HashMap<String,Couple>cpy = locationDiam;
-			for(String locD : locDiamsAg.keySet()) {
-				if(!locDiamsAg.containsKey(locD)) {
-					cpy.remove(locD);
+			HashMap<String, Couple> cpy = (HashMap<String, Couple>) this.locationDiam.clone();
+			for( String locD : this.locationDiam.keySet() ) {
+				if(harvestedSAg.getLeft().contains(locD)) {
+					if(!locDiamsAg.containsKey(locD)) {
+						cpy.remove(locD);
+						this.treasureHarvested.getLeft().add(locD);
+					}
 				}
 			}
 			this.locationDiam = cpy;
 		}else {
-			HashMap<String,Couple>cpy = locationGold;
-			for(String locG : locGoldsAg.keySet()) {
-				if(!locGoldsAg.containsKey(locG)) {
-					cpy.remove(locG);
+			HashMap<String, Couple> cpy = (HashMap<String, Couple>) this.locationGold.clone();
+			for( String locG : this.locationGold.keySet() ) {
+				if(harvestedSAg.getLeft().contains(locG)) {
+					if(!locGoldsAg.containsKey(locG)) {
+						cpy.remove(locG);
+						this.treasureHarvested.getRight().add(locG);
+					}
 				}
 			}
 			this.locationGold = cpy;
@@ -415,8 +435,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	 * OK, met à jour les locations non récoltées par l'agent.
 	 */
 	public void updateLocalLocation() {
-		this.localLocationDiam = this.locationDiam;
-		this.localLocationGold = this.locationGold;
+		this.localLocationDiam = (HashMap<String, Couple>) this.locationDiam.clone();
+		this.localLocationGold = (HashMap<String, Couple>) this.locationGold.clone();
 		
 		for(String locD : this.locationDiam.keySet()) {
 			if(this.treasureHarvested.getLeft().contains(locD)) {
@@ -446,59 +466,74 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	 * 
 	 * @param myPosition : position de l'agent
 	 */
-	public void TreasureHarvested(String myPosition) {
+	public void TreasureHarvested() {
+		
+		// List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();
+		
 		// Partie récolte si l'agent est arrivé sur l'objectif
+		String myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
+//		System.out.println(this.getLocalName() + " RECOLTE en " + myPosition);
 		if(this.expertise.equals(Observation.DIAMOND)) {
-			this.printLocation(this.locationDiam, "Diam");
+//			this.printLocation(this.locationDiam, "Diam");
 			try {
-				int qteD = (int) this.locationDiam.get(myPosition).getRight();
-				this.openLock(Observation.DIAMOND);
-				this.pick();
+				// int qteD = (int) this.locationDiam.get(myPosition).getRight();
+				boolean t = this.openLock(Observation.DIAMOND);
+				if(t) {
+//					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
+				}else {
+//					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
+				}
+				int qteD = this.pick();
 				if(qteD <=this.freeSpaceDiamPerso) {
-					System.out.println("Diamants récoltés qt : " + qteD + " | freespace : " + this.freeSpaceDiamPerso);
-					this.treasureHarvested.getRight().add(myPosition);
+//					System.out.println("Diamants récoltés qt : " + qteD + " | freespace : " + this.freeSpaceDiamPerso);
 					this.freeSpaceDiamPerso-=qteD;
 					this.locationDiam.remove(myPosition); // Trésor entierement ramassé
 				}
 				else {
-					System.out.println("Diamants récoltés qt : " + this.freeSpaceDiamPerso + " | freespace : " + this.freeSpaceDiamPerso + " | qt dispo : " + qteD);
+//					System.out.println("Diamants récoltés qt : " + this.freeSpaceDiamPerso + " | freespace : " + this.freeSpaceDiamPerso + " | qt dispo : " + qteD);
 					this.locationDiam.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteD-this.freeSpaceDiamPerso));
 					this.freeSpaceDiamPerso=0;
 					this.finition = true;
 					this.recolte = false;
 				}
+				this.treasureHarvested.getRight().add(myPosition);
 		    } catch (Exception e) {
-			      System.out.println("Pas de diamants ici.");
-			      System.out.println(this.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.harvestObj);
+//			      System.out.println("Pas de diamants ici.");
+//			      System.out.println(this.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.harvestObj);
 			      this.locationDiam.remove(myPosition); // Trésor entierement ramassé
 		    }
-			this.printLocation(this.locationDiam, "Diam");
+//			this.printLocation(this.locationDiam, "Diam");
 		}else {
 			try {
-				this.printLocation(this.locationGold, "Gold");
-				int qteG = (int) this.locationGold.get(myPosition).getRight();
-				this.openLock(Observation.GOLD);
-				this.pick();
+//				this.printLocation(this.locationGold, "Gold");
+				// int qteG = (int) this.locationGold.get(myPosition).getRight();
+				boolean t = this.openLock(Observation.GOLD);
+				if(t) {
+//					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
+				}else {
+//					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
+				}
+				int qteG = this.pick();
 				if(qteG <=this.freeSpaceGoldPerso) {
-					System.out.println("Gold récoltés qt : " + qteG + " | freespace : " + this.freeSpaceGoldPerso);
-					this.treasureHarvested.getLeft().add(myPosition);
+//					System.out.println("Gold récoltés qt : " + qteG + " | freespace : " + this.freeSpaceGoldPerso);
 					this.freeSpaceGoldPerso-=qteG;
 					this.locationGold.remove(myPosition); // Trésor entierement ramassé
 				}
 				else {
-					System.out.println("FINITION - Gold récoltés qt : " + this.freeSpaceGoldPerso + " | freespace : " + this.freeSpaceGoldPerso + " | qt dispo : " + qteG);
+//					System.out.println("FINITION - Gold récoltés qt : " + this.freeSpaceGoldPerso + " | freespace : " + this.freeSpaceGoldPerso + " | qt dispo : " + qteG);
 					this.locationGold.put(myPosition, new Couple<Long,Integer>(System.currentTimeMillis(),qteG-this.freeSpaceGoldPerso));
 					this.freeSpaceGoldPerso=0;
 					this.finition = true;
 					this.recolte = false;
 				}
+				this.treasureHarvested.getLeft().add(myPosition);
 		    } catch (Exception e) {
-			      System.out.println("Pas de gold ici.");
-			      System.out.println(this.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.harvestObj);
+//			      System.out.println("Pas de gold ici.");
+//			      System.out.println(this.getLocalName() + " : myposition : " + myPosition + "| obj : " + this.harvestObj);
 			      this.locationGold.remove(myPosition); // Trésor entierement ramassé
 		    }
-			this.printLocation(this.locationGold, "Gold");
-			System.out.println("----------------------------------------------------");
+//			this.printLocation(this.locationGold, "Gold");
+//			System.out.println("----------------------------------------------------");
 		}
 		if(this.expertise.equals(Observation.DIAMOND)) {
 			if(this.freeSpaceDiamPerso < this.objectif) {
@@ -587,26 +622,38 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			}
 			i+=1;
 		}
-		HungarianAlgo ha = new HungarianAlgo(matrix);
-		int[][] assignment = ha.findOptimalAssignment();
 		
-		int col = 0;
-		for(int ii=0; ii < assignment.length; ii++) {
-			if(assignment[ii][1] == currentAgentId) {
-				col = ii;
-				break;
-			}
-		}
-		try {
-			this.scoreObj = matrix[col][currentAgentId];
-		}catch(Exception e) {
-			this.scoreObj = matrix[col][0];
-		}
+		if(matrix.length == 0) {
+			this.recolte = false;
+			this.finition = true;
+		}else {
+		
+			HungarianAlgo ha = new HungarianAlgo(matrix);
+			int[][] assignment = ha.findOptimalAssignment();
 			
-		try {
-			this.harvestObj = (String) location.keySet().toArray()[col];
-		}catch (Exception e) {
-			this.harvestObj = (String) location.keySet().toArray()[0];
+			int col = 0;
+			for(int ii=0; ii < assignment.length; ii++) {
+				if(assignment[ii][1] == currentAgentId) {
+					col = ii;
+					break;
+				}
+			}
+			try {
+				this.scoreObj = matrix[col][currentAgentId];
+			}catch(Exception e) {
+				this.scoreObj = matrix[col][0];
+			}
+			
+			if(location.keySet().toArray().length == 0) {
+				this.finition = true;
+				this.recolte = false;
+			}else {
+				try {
+					this.harvestObj = (String) location.keySet().toArray()[col];
+				}catch (Exception e) {
+					this.harvestObj = (String) location.keySet().toArray()[0];
+				}
+			}
 		}
 	}
 	
@@ -625,7 +672,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				this.coopHarvest(this.locationGold, this.PersoGold, myPosition, this.backpackGold, this.freeSpaceGoldPerso, this.treasureHarvested.getRight());
 			}	
 		}
-		
+		System.out.println(this.getLocalName() + " : Nvl objectif - " + this.harvestObj);
 	}
 	
 	public void UpdateExpertise() {
@@ -729,17 +776,14 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	}
 	
 	/**
-	 * Random for the moment
-	 * 
+	 * Random 
 	 */
 	public void defineFinitionObjective() {
 		
 		// Random objective
 		
 		int nb = (int) this.myMap.getGraph().nodes().count();
-		//System.out.println(nb);
 		int i = (int) (Math.random() * (nb-1)) ;
-		//System.out.println(i);
 		this.finitionObj = this.myMap.getGraph().getNode(i).getId();
 		//System.out.println(this.finitionObj);
 		/*
@@ -766,21 +810,23 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		}
 		
 		List<String> nextMove = this.myMap.getShortestPath(myPosition, this.finitionObj);
-		
+		int cnt = 0;
 		if(!myPosition.equals(this.finitionObj) && nextMove.size() > 0) {
 			nextNode = nextMove.get(0);
-			while(this.placeWantToGo.equals(nextNode)) {
+			while(this.placeWantToGo.equals(nextNode) && cnt < 10) {
 				do {
 					this.defineFinitionObjective();
 					nextMove = this.myMap.getShortestPath(myPosition, this.finitionObj);
+					cnt++;
 				}while(nextMove.size() < 1);
 				nextNode = nextMove.get(0);
 			}
 		}else {
-			while(myPosition.equals(this.finitionObj)) {
+			while(myPosition.equals(this.finitionObj) && cnt < 10) {
 				do {
 					this.defineFinitionObjective();
 					nextMove = this.myMap.getShortestPath(myPosition, this.finitionObj);
+					cnt++;
 				}while(nextMove.size() < 1);
 				nextNode = nextMove.get(0);
 			}
@@ -855,21 +901,26 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	
 	
 	public String defineRandomObj(String nextNode) {
-		String tempObj;
+		String tempObj = this.placeWantToGo;
 		List<String> nextMove = null;
 		String nextNodecpy = nextNode;
-		String myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
+		int cnt = 0;
 		do {
 			do {
 				// Node random
-				int nb = (int) this.myMap.getGraph().nodes().count();
-				int i = (int) (Math.random() * (nb-1)) ;
-				tempObj = this.myMap.getGraph().getNode(i).getId();
-				// Cherche chemin
-				nextMove = this.myMap.getShortestPath(myPosition, tempObj);
-			}while(nextMove.size() < 1);
+				try {
+					int nb = (int) this.myMap.getGraph().nodes().count();
+					int i = (int) (Math.random() * (nb-1)) ;
+					tempObj = this.myMap.getGraph().getNode(i).getId();
+					String myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
+					nextMove = this.myMap.getShortestPath(myPosition, tempObj);
+					cnt++;
+				}catch(Exception e) {
+					continue;
+				}
+			}while(((nextMove == null) || (nextMove.size() < 1)));
 			nextNodecpy = nextMove.get(0);
-		}while(this.placeWantToGo.equals(nextNodecpy));
+		}while(this.placeWantToGo.equals(nextNodecpy) && cnt < 10);
 		return tempObj;
 	}
 	
@@ -890,8 +941,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			}
 			((AbstractDedaleAgent)this).moveTo(nextNodecpy);
 			myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
-			if(this.myMap.getShortestPath(myPosition, tempObj).size() == 0) {
-				tempObj = this.defineRandomObj(nextNode);
+			if(this.myMap.getShortestPath(myPosition, tempObj).size() == 0 || !myPosition.equals(nextNodecpy)) {
+				tempObj = this.defineRandomObj(nextNodecpy);
 			}
 		}
 	}
@@ -899,6 +950,28 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public void printScore() {
 		System.out.println("Score agent \"" + this.getLocalName() + "\" : " + (this.backpackDiam - this.freeSpaceDiamPerso) + " Diamond(s)" );
 		System.out.println("Score agent \"" + this.getLocalName() + "\" : " + (this.backpackGold - this.freeSpaceGoldPerso) + " Gold(s)" );
+	}
+	
+
+	public boolean checkObjectiveHarvest() {
+		if(this.harvestObj == null) {
+			return false;
+		}
+		if(this.expertise.equals(Observation.GOLD)) {
+			for(String check : this.locationDiam.keySet()) {
+				if(this.harvestObj.equals(check)) {
+					return true;
+				}
+			}
+			return false;
+		}else {
+			for(String check : this.locationGold.keySet()) {
+				if(this.harvestObj.equals(check)) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 	
 }

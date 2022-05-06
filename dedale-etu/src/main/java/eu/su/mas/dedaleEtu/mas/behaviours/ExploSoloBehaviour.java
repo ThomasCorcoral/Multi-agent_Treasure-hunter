@@ -168,6 +168,9 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 				}
 				
 				
+				
+				
+				
 				/********************************************
 				 * SELECTION D'UN NOUVEL OBJECTIF (RECOLTE) *
 				 ********************************************/
@@ -181,14 +184,33 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 					}
 					// Partie récolte si l'agent est arrivé sur l'objectif
 					if(this.ag.harvestObj == null) {
-						this.ag.TreasureHarvested(myPosition);
+						this.ag.TreasureHarvested();
 					}
 					// Partie définition du prochain objectif
 					if(this.ag.harvestObj.startsWith("-") && this.ag.recolte) {
-						System.out.println("Définition d'un nouvel objectif de récolte !");
+						// System.out.println("Définition d'un nouvel objectif de récolte !");
 						this.ag.UpdateHarvest(myPosition);
 					}
 				}
+				
+				/*
+				if(this.ag.recolte) {
+					if(!this.ag.checkObjectiveHarvest()) {
+						System.out.print("problème loc ");
+						this.ag.UpdateHarvest(myPosition);
+					}
+					if(this.ag.expertise.equals(Observation.DIAMOND)) {
+						if(this.ag.locationDiam.keySet().size() == 0) {
+							this.ag.recolte = false;
+							this.ag.finition = true;
+						}
+					}else {
+						if(this.ag.locationGold.keySet().size() == 0) {
+							this.ag.recolte = false;
+							this.ag.finition = true;
+						}
+					}
+				}*/
 				
 				/********************************************
 				 *  *
@@ -215,6 +237,13 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 						this.ag.randomMove(10, nextNode);
 						this.ag.lock_turn = 0;
 						myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+					}
+					
+					if(this.ag.harvestObj == null) {
+						this.ag.TreasureHarvested();
+					}
+					if(this.ag.harvestObj.startsWith("-") && this.ag.recolte) {
+						this.ag.UpdateHarvest(myPosition);
 					}
 					
 					if(!this.ag.harvestObj.equals(myPosition)) {
