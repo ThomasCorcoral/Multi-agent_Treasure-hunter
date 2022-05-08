@@ -5,13 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import eu.su.mas.dedaleEtu.mas.agents.dummies.AgentOptimized;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.DummyMovingAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.DummyTankerAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploOptimAgent;
-import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agents.GateKeeperAgent;
 import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.DummyWumpusShift;
+import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.DummyWumpusShift2;
 import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.Controlled.ControlledAgent;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
@@ -392,7 +389,7 @@ public class Principal {
 		/*********
 //		 * AGENT Explo4
 //		 *********/
-		
+		/*
 		//1) Get the container where the agent will appear
 		c = containerList.get(ConfigurationFile.LOCAL_CONTAINER2_NAME);
 		Assert.assertNotNull("This container does not exist",c);
@@ -480,7 +477,7 @@ public class Principal {
 		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParametersExplo6);//ExploreCoopAgent
 		
 		agentList.add(ag);
-		
+		*/
 	/***********************************************************************
 	 * Type of agents used when you collect and gather treasures on the map
 	 ***********************************************************************/
@@ -520,6 +517,48 @@ public class Principal {
 //		ag=createNewDedaleAgent(c, agentName, DummyTankerAgent.class.getName(), entityParametersT);
 //		agentList.add(ag);
 //		
+		/***************
+		 * AGENT EXAMEN
+		 ***************/
+		agentName="G1";        
+		Object [] entityParameters0={"My parameters"};
+		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift2.class.getName(), entityParameters0);    
+		agentList.add(ag);
+		
+		agentName="G2";        
+		Object [] entityParameters1={"My parameters"};
+		ag=createNewDedaleAgent(c, agentName, DummyWumpusShift2.class.getName(), entityParameters1);    
+		agentList.add(ag);
+		
+		agentName="A1";        
+		Object [] entityParameters2={"A2","A3","A4","A5","A6"};
+		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParameters2);    
+		agentList.add(ag);
+		
+		agentName="A2";        
+		Object [] entityParameters3={"A1","A3","A4","A5","A6"};
+		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParameters3);    
+		agentList.add(ag);
+		
+		agentName="A3";        
+		Object [] entityParameters4={"A2","A1","A4","A5","A6"};
+		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParameters4);    
+		agentList.add(ag);
+		
+		agentName="A4";        
+		Object [] entityParameters5={"A2","A3","A1","A5","A6"};
+		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParameters5);    
+		agentList.add(ag);
+		
+		agentName="A5";        
+		Object [] entityParameters6={"A2","A3","A4","A1","A6"};
+		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParameters6);    
+		agentList.add(ag);
+		
+		agentName="A6";        
+		Object [] entityParameters7={"A2","A3","A4","A5","A1"};
+		ag=createNewDedaleAgent(c, agentName, AgentOptimized.class.getName(), entityParameters7);    
+		agentList.add(ag);
 		
 		/*********************
 		 * All agents created

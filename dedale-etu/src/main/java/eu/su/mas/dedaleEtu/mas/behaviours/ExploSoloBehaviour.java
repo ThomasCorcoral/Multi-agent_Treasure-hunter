@@ -296,7 +296,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
 		Map<String, ArrayList> dicoExplo = this.ag.dico;
 		//System.out.println("Nombre d'agents croisés : "+dicoExplo.size()+" pour "+this.ag.getLocalName());
 		//System.out.println("Nombre de noeuds ouverts : "+this.openNodes.size()+" pour "+this.ag.getLocalName());
-        if(wait || (!this.ag.finition && !this.ag.recolte && ((this.openNodes.size()<6 && dicoExplo.size()==this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000) /*|| System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 */))) {
+        if(wait || (!this.ag.finition && !this.ag.recolte && ((this.openNodes.size()<6 && dicoExplo.size()==this.ag.list_agentNames.size() && System.currentTimeMillis()-this.ag.tempsExplo>60*1000) || System.currentTimeMillis()-this.ag.tempsExplo>this.ag.timeout*1000 ))) {
         	if(wait || !(dicoExplo.size()==this.ag.list_agentNames.size())) {
         		this.ag.searchAgents = true;
         	}else {
@@ -304,6 +304,7 @@ public class ExploSoloBehaviour extends OneShotBehaviour {
         		this.ag.finitionObj = null;
         		this.ag.defineBestComposition();
         		this.ag.transisitonHarvest();
+        		System.out.println("HARVEST BEGIN FOR "+this.ag.getLocalName());
         	}
     	}
 	}

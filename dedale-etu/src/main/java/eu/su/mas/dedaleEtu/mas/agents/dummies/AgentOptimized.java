@@ -73,7 +73,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public int optTreasure=0;
 	public long tempsExplo=-1;
 	public Couple<ArrayList,ArrayList> treasureHarvested=new Couple<ArrayList,ArrayList>(new ArrayList<String>(),new ArrayList<String>());// Partie droite : trésors Gold récoltés et partie gauche : trésor diamant récoltés
-	public long timeout=2*60+1*30;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
+	public long timeout=3*60;//après au plus 3 minutes d'exploration, on passe l'agent en phase de récolte
 	public float difOpt = -1;
 	public String harvestObj="-1";
 	public boolean finition = false;
@@ -479,9 +479,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				// int qteD = (int) this.locationDiam.get(myPosition).getRight();
 				boolean t = this.openLock(Observation.DIAMOND);
 				if(t) {
-//					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
+					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
 				}else {
-//					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
+					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
 				}
 				int qteD = this.pick();
 				if(qteD <=this.freeSpaceDiamPerso) {
@@ -509,9 +509,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				// int qteG = (int) this.locationGold.get(myPosition).getRight();
 				boolean t = this.openLock(Observation.GOLD);
 				if(t) {
-//					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
+					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
 				}else {
-//					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
+					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
 				}
 				int qteG = this.pick();
 				if(qteG <=this.freeSpaceGoldPerso) {
