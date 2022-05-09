@@ -11,12 +11,13 @@ import jade.lang.acl.UnreadableException;
 public class WaitACK  extends OneShotBehaviour{
 	private AgentOptimized a;
 	private long t1;
-	private final float stopTimer=(float) 3;
+	private final float stopTimer;
 	private boolean receivedACK;
 	private int response;
 	public WaitACK(AgentOptimized a) {
 		super(a);
 		this.a=a;
+		this.stopTimer =(float) this.a.WAITINGTIME*6; 
 
 	}
 

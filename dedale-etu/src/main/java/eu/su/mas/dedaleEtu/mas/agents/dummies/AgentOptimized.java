@@ -52,6 +52,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public int nbTotalNodes=0;
 	public int cptRegisteredNodes=0;
 	public int nbAgentCrossed=0;
+	
+	public int WAITINGTIME = 200;
+	
 	public ArrayList<AID> WaitingForMAp=new ArrayList<AID>();
 	//locationGold contient la liste des noeuds contenant de l'or associé au couple l'heure où il a été découvert et la quantité d'or que le noeud contient
 	public HashMap<String,Couple>locationGold=new HashMap<String,Couple>();
@@ -73,7 +76,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 	public int optTreasure=0;
 	public long tempsExplo=-1;
 	public Couple<ArrayList,ArrayList> treasureHarvested=new Couple<ArrayList,ArrayList>(new ArrayList<String>(),new ArrayList<String>());// Partie droite : trésors Gold récoltés et partie gauche : trésor diamant récoltés
-	public long timeout=3*60;//après au plus 3 minutes d'exploration, on passe l'agent en phase de récolte
+	public long timeout=2*60+1*30;//après au plus 2 minutes d'exploration, on passe l'agent en phase de récolte
 	public float difOpt = -1;
 	public String harvestObj="-1";
 	public boolean finition = false;
@@ -204,8 +207,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		addBehaviour(new startMyBehaviours(this,lb));
 		
 		
-		
-		System.out.println("the  agent "+this.getLocalName()+ " is started");
+		System.out.println("the agent "+this.getLocalName()+ " is started");
 		
 
 	}
@@ -221,8 +223,8 @@ public class AgentOptimized extends AbstractDedaleAgent {
 		this.agentsCapacity.put(sAg.agentId, capa);
 		
 		this.updateLocation(sAg.getLocationDiam(), sAg.getLocationGold());
-		this.updatePersoTreasure(sAg.getPersoDiam(), sAg.getPersoGold());
-		this.updateFreeSpaces();
+		// this.updatePersoTreasure(sAg.getPersoDiam(), sAg.getPersoGold());
+		// this.updateFreeSpaces();
 		String myPosition=((AbstractDedaleAgent)this).getCurrentPosition();
 		
 		//sAg.getTreasuresHarvested()
@@ -479,9 +481,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				// int qteD = (int) this.locationDiam.get(myPosition).getRight();
 				boolean t = this.openLock(Observation.DIAMOND);
 				if(t) {
-					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
+//					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
 				}else {
-					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
+//					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
 				}
 				int qteD = this.pick();
 				if(qteD <=this.freeSpaceDiamPerso) {
@@ -509,9 +511,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 				// int qteG = (int) this.locationGold.get(myPosition).getRight();
 				boolean t = this.openLock(Observation.GOLD);
 				if(t) {
-					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
+//					System.out.println(this.getLocalName() + " COFFRE OUVERT EN " + myPosition);
 				}else {
-					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
+//					System.out.println(this.getLocalName() + " COFFRE PAS OUVERT EN " + myPosition);
 				}
 				int qteG = this.pick();
 				if(qteG <=this.freeSpaceGoldPerso) {
@@ -601,9 +603,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 					currentAgentId = j;
 					float missOpt = (this.optTreasure*backpack) - (backpack - freeSpace);
 					int difOpt = (int) Math.abs(missOpt - valTreasure);
-					if(harvested.contains(loc)) {
+					/*if(harvested.contains(loc)) {
 						difOpt += 10000;
-					}
+					}*/
 					matrix[i][j] = (int) dist + difOpt;
 				}else {
 					int difOpt = 0;
@@ -613,9 +615,9 @@ public class AgentOptimized extends AbstractDedaleAgent {
 						difOpt = Math.abs(this.optTreasure - valTreasure);
 					}
 					if(dist > dMoy) {
-						matrix[i][j] = (int) (1.5 * dist + difOpt);
+						matrix[i][j] = (int) (1.5 * dist +difOpt);
 					}else {
-						matrix[i][j] = (int) (0.75 * dist + difOpt);
+						matrix[i][j] = (int) (0.75 * dist +difOpt);
 					}
 				}
 				j+=1;
@@ -645,8 +647,23 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			}
 			
 			if(location.keySet().toArray().length == 0) {
-				this.finition = true;
-				this.recolte = false;
+				if(this.expertise.equals(Observation.GOLD)) {
+					if(this.backpackGold == this.freeSpaceGold) {
+						this.expertise = Observation.DIAMOND;
+						this.harvestObj = "-1";
+					}else {
+						this.finition = true;
+						this.recolte = false;
+					}
+				}else {
+					if(this.backpackDiam == this.freeSpaceDiam) {
+						this.expertise = Observation.GOLD;
+						this.harvestObj = "-1";
+					}else {
+						this.finition = true;
+						this.recolte = false;
+					}
+				}
 			}else {
 				try {
 					this.harvestObj = (String) location.keySet().toArray()[col];
@@ -935,7 +952,7 @@ public class AgentOptimized extends AbstractDedaleAgent {
 			nextNodecpy = this.myMap.getShortestPath(myPosition, tempObj).get(0);
 			this.placeWantToGo=nextNodecpy;
 			try {
-				this.doWait(500);
+				this.doWait(WAITINGTIME);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
